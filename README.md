@@ -246,15 +246,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
 
 This repository is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE).
 
-In plain terms:
+The project is shared to help the community learn, experiment, and build practical understanding of Companies House data workflows. Please use it for non-commercial learning, research, teaching, prototyping, and community exploration.
 
-- welcome: personal learning, research, experimentation, education, and non-commercial community use;
-- not granted by the public licence: paid client work, internal use by a for-profit organisation, paid products or services, hosted services, paid support, or commercial consultancy workflows;
-- required for commercial use: separate written permission before use.
+If the software would support commercial activity, please seek an explicit commercial licence before use. That includes paid client work, internal for-profit workflows, paid products or services, hosted services, paid support, or commercial consultancy.
 
 The legally controlling text is [LICENSE](LICENSE). Summaries in this README, [COMMERCIAL.md](COMMERCIAL.md), or [LICENSING-FAQ.md](LICENSING-FAQ.md) do not replace or modify the licence.
 
-For initial non-confidential contact about commercial licensing, open the [commercial licensing issue template](https://github.com/Paritoshdagar/uk-company-dossier/issues/new?template=commercial-licensing.yml). A separate signed written licence is required before any commercial use.
+For initial non-confidential contact about commercial licensing, open the [commercial licensing issue template](https://github.com/Paritoshdagar/uk-company-dossier/issues/new?template=commercial-licensing.yml). No commercial-use rights are granted unless and until a separate written licence has been agreed and signed.
 
 ## Development checks
 

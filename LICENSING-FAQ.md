@@ -14,7 +14,9 @@ Unless a file says otherwise, repository-authored source code, scripts, configur
 
 ## May I use the repository commercially?
 
-Commercial use requires separately signed written permission from the copyright holder. Sending a request, opening an issue, or discussing a possible commercial licence is not permission.
+This project is shared for community learning, research, teaching, prototyping, and non-commercial experimentation.
+
+Commercial use requires an explicit written commercial licence before use. That includes paid client work, internal for-profit workflows, paid products or services, hosted services, paid support, and commercial consultancy. Sending a request, opening an issue, or discussing a possible commercial licence is not permission.
 
 ## May I contribute?
 

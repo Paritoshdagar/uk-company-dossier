@@ -5,7 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        This issue is public. Opening or submitting it does not grant permission or commercial-use rights.
+        This project is shared for community learning and non-commercial experimentation. Thoughtful commercial licensing conversations are welcome where the use case is clear and respectful of that purpose.
+
+        This issue is public. Opening or submitting it does not grant permission or commercial-use rights; commercial use requires a separate written licence before use.
 
         Do not include confidential information, client information, credentials, private-company information, or sensitive personal information.
   - type: input
@@ -36,5 +38,5 @@ body:
     attributes:
       label: Commercial permission
       options:
-        - label: I understand that opening or submitting this issue does not grant permission or commercial-use rights, and that I have no commercial-use rights unless and until a separate written licence is signed.
+        - label: I understand that opening or submitting this issue does not grant permission or commercial-use rights, and that commercial use requires a separate written licence before use.
           required: true
