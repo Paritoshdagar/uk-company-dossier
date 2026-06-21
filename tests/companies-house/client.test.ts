@@ -357,6 +357,27 @@ describe("Companies House HTTP client", () => {
     expect(error.message).toContain("malformed JSON");
     expect(JSON.stringify(error)).not.toContain("PRIVATE-BODY-FRAGMENT");
   });
+
+  it("does not copy JSON parser body snippets into malformed JSON error causes", async () => {
+    const { client } = createHarness([
+      jsonResponse("<html>PRIVATE-BODY-FRAGMENT</html>", { status: 200 }),
+    ]);
+
+    const error = await expectRejectsWith(
+      () => client.requestJson("/company/00000006"),
+      CompaniesHouseHttpError,
+    );
+    const serializedError = JSON.stringify(error);
+
+    expect(error.safeCause).toEqual({
+      message: "JSON parse failed.",
+      name: "SyntaxError",
+    });
+    expect(serializedError).not.toContain("PRIVATE");
+    expect(serializedError).not.toContain("PRIVATE-BODY-FRAGMENT");
+    expect(serializedError).not.toContain("<html>");
+    expect(serializedError).not.toContain("PRIV");
+  });
 });
 
 describe("Companies House retry helpers", () => {

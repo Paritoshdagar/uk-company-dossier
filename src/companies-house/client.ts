@@ -367,17 +367,10 @@ async function fetchWithTimeout(
   }
 }
 
-function safeCauseFromMalformedJson(error: unknown): {
+function safeCauseFromMalformedJson(): {
   readonly message: string;
   readonly name: string;
 } {
-  if (error instanceof Error) {
-    return {
-      message: error.message,
-      name: error.name,
-    };
-  }
-
   return {
     message: "JSON parse failed.",
     name: "SyntaxError",
@@ -395,11 +388,11 @@ async function parseJsonResponse<TData>(
 
   try {
     data = JSON.parse(rawText) as TData;
-  } catch (error) {
+  } catch {
     throw new CompaniesHouseHttpError(
       "Companies House response contained malformed JSON.",
       {
-        cause: safeCauseFromMalformedJson(error),
+        cause: safeCauseFromMalformedJson(),
         status: response.status,
       },
     );
