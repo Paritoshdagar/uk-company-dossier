@@ -15,6 +15,7 @@ export default tseslint.config(
         projectService: {
           allowDefaultProject: [
             "tests/cli/*.ts",
+            "tests/companies-house/*.ts",
             "tests/config/*.ts",
             "tests/contracts/*.ts",
             "tests/doctor/*.ts",
