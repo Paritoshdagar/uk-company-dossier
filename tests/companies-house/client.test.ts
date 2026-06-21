@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CompaniesHouseHttpError,
+  DocumentSafetyError,
   RateLimitError,
   ResourceNotFoundError,
 } from "../../src/contracts/errors.js";
@@ -11,6 +12,7 @@ import {
   createCompaniesHouseClient,
   getRetryPlan,
   redactRequestUrl,
+  type CompaniesHouseBytesResponse,
   type CompaniesHouseClientDependencies,
   type CompaniesHouseLogger,
   type CompaniesHouseRequestLog,
@@ -44,11 +46,13 @@ function createHarness(
 ): {
   readonly client: ReturnType<typeof createCompaniesHouseClient>;
   readonly fetchCalls: RequestInit[];
+  readonly fetchUrls: string[];
   readonly logEvents: CompaniesHouseRequestLog[];
   readonly sleepCalls: number[];
 } {
   const pending = [...responses];
   const fetchCalls: RequestInit[] = [];
+  const fetchUrls: string[] = [];
   const logEvents: CompaniesHouseRequestLog[] = [];
   const sleepCalls: number[] = [];
   const logger: CompaniesHouseLogger = {
@@ -61,7 +65,14 @@ function createHarness(
     clock: {
       now: () => new Date("2026-02-03T04:05:06.789Z"),
     },
-    fetch: (_url, init = {}) => {
+    fetch: (url, init = {}) => {
+      fetchUrls.push(
+        url instanceof URL
+          ? url.toString()
+          : typeof url === "string"
+            ? url
+            : url.url,
+      );
       fetchCalls.push(init);
       const next = pending.shift();
 
@@ -98,9 +109,54 @@ function createHarness(
       dependencies,
     ),
     fetchCalls,
+    fetchUrls,
     logEvents,
     sleepCalls,
   };
+}
+
+async function collectByteBody(
+  body: CompaniesHouseBytesResponse["body"],
+): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let byteLength = 0;
+
+  if (
+    typeof body === "object" &&
+    typeof (body as { readonly getReader?: unknown }).getReader === "function"
+  ) {
+    const reader = (body as ReadableStream<Uint8Array>).getReader();
+
+    try {
+      for (;;) {
+        const result = await reader.read();
+
+        if (result.done) {
+          break;
+        }
+
+        chunks.push(result.value);
+        byteLength += result.value.byteLength;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  } else {
+    for await (const chunk of body) {
+      chunks.push(chunk);
+      byteLength += chunk.byteLength;
+    }
+  }
+
+  const bytes = new Uint8Array(byteLength);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return bytes;
 }
 
 async function expectRejectsWith<TError extends Error>(
@@ -133,6 +189,63 @@ describe("Companies House HTTP client", () => {
     );
     expect(headers.get("accept")).toBe("application/json");
     expect(headers.get("user-agent")).toMatch(/^uk-company-dossier\//u);
+  });
+
+  it("uses the same authenticated client plumbing for byte requests", async () => {
+    const rawBytes = Buffer.from("%PDF-1.4\nexample\n%%EOF\n", "utf8");
+    const { client, fetchCalls } = createHarness([
+      new Response(rawBytes, {
+        headers: {
+          "content-length": String(rawBytes.byteLength),
+          "content-type": "application/pdf",
+        },
+        status: 200,
+      }),
+    ]);
+
+    const result = await client.requestBytes("/document/doc-pdf-001/content", {
+      accept: "application/pdf",
+    });
+
+    expect(fetchCalls).toHaveLength(1);
+    const headers = new Headers(fetchCalls[0]?.headers);
+    expect(fetchCalls[0]?.redirect).toBe("manual");
+    expect(headers.get("authorization")).toBe(
+      `Basic ${Buffer.from(`${fakeApiKey}:`).toString("base64")}`,
+    );
+    expect(headers.get("accept")).toBe("application/pdf");
+    expect(headers.get("user-agent")).toMatch(/^uk-company-dossier\//u);
+    expect(result).toMatchObject({
+      contentLength: rawBytes.byteLength,
+      contentType: "application/pdf",
+      finalUrl: `${apiBaseUrl}/document/doc-pdf-001/content`,
+      requestedUrl: `${apiBaseUrl}/document/doc-pdf-001/content`,
+      retrievedAt: "2026-02-03T04:05:06.789Z",
+      status: 200,
+    });
+    await expect(collectByteBody(result.body)).resolves.toEqual(
+      new Uint8Array(rawBytes),
+    );
+  });
+
+  it("rejects external byte-request redirects before following the Location", async () => {
+    const { client, fetchCalls, fetchUrls } = createHarness([
+      new Response("", {
+        headers: {
+          location: "https://evil.example/document/doc-pdf-001/content",
+        },
+        status: 302,
+      }),
+    ]);
+
+    await expect(
+      client.requestBytes("/document/doc-pdf-001/content", {
+        accept: "application/pdf",
+      }),
+    ).rejects.toBeInstanceOf(DocumentSafetyError);
+
+    expect(fetchUrls).toEqual([`${apiBaseUrl}/document/doc-pdf-001/content`]);
+    expect(fetchCalls[0]?.redirect).toBe("manual");
   });
 
   it("rejects external absolute URLs before fetch or request logging", async () => {

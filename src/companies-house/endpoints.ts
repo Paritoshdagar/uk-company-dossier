@@ -1,8 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { link, mkdir, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { isAbsolute, join, resolve, sep } from "node:path";
 
 import {
+  type CompaniesHouseBytesBody,
+  type CompaniesHouseBytesResponse,
   type CompaniesHouseClient,
   type CompaniesHouseJsonResponse,
 } from "./client.js";
@@ -64,28 +66,8 @@ export type FilingDocumentAllowedContentType =
   | "application/pdf"
   | "application/xhtml+xml";
 
-export type FilingDocumentBody =
-  | AsyncIterable<Uint8Array>
-  | Iterable<Uint8Array>
-  | ReadableStream<Uint8Array>;
-
-export interface FilingDocumentContentRequest {
-  readonly accept: FilingDocumentAllowedContentType;
-  readonly url: URL;
-}
-
-export interface FilingDocumentContentResponse {
-  readonly body: FilingDocumentBody;
-  readonly contentLength?: number | undefined;
-  readonly contentType?: string | undefined;
-  readonly finalUrl: string;
-}
-
-export interface FilingDocumentContentFetcher {
-  fetch(
-    request: FilingDocumentContentRequest,
-  ): Promise<FilingDocumentContentResponse>;
-}
+export type FilingDocumentBody = CompaniesHouseBytesBody;
+export type FilingDocumentContentResponse = CompaniesHouseBytesResponse;
 
 export interface FilingDocumentWriteRequest {
   readonly bytes: Uint8Array;
@@ -100,12 +82,18 @@ export interface FilingDocumentWriter {
   ): Promise<{ readonly filePath: string }>;
 }
 
+export interface FilingDocumentWriterHooks {
+  readonly beforeFinalize?: (context: {
+    readonly filePath: string;
+    readonly tempPath: string;
+  }) => Promise<void> | void;
+}
+
 export interface RetrieveFilingDocumentOptions {
   readonly client: CompaniesHouseClient;
   readonly clock?: {
     now(): Date;
   };
-  readonly contentFetcher: FilingDocumentContentFetcher;
   readonly documentApiBaseUrl?: string;
   readonly documentId?: string;
   readonly documentMetadataLink?: string;
@@ -136,33 +124,27 @@ const allowedDocumentContentTypes = [
   "application/xhtml+xml",
 ] as const satisfies readonly FilingDocumentAllowedContentType[];
 
-const nodeFilingDocumentWriter: FilingDocumentWriter = {
-  async writeAtomic(
-    request: FilingDocumentWriteRequest,
-  ): Promise<{ readonly filePath: string }> {
-    await mkdir(request.outputDirectory, { recursive: true });
+export function createFilingDocumentWriter(
+  hooks: FilingDocumentWriterHooks = {},
+): FilingDocumentWriter {
+  return {
+    async writeAtomic(
+      request: FilingDocumentWriteRequest,
+    ): Promise<{ readonly filePath: string }> {
+      await mkdir(request.outputDirectory, { recursive: true });
 
-    const outputDirectory = resolve(request.outputDirectory);
-    const filePath = resolve(outputDirectory, request.filename);
-    const tempPath = join(
-      outputDirectory,
-      `.${request.filename}.${randomUUID()}.tmp`,
-    );
-
-    if (!isPathInsideDirectory(filePath, outputDirectory)) {
-      throw new DocumentSafetyError(
-        "Filing document output path escaped the configured output directory.",
+      const outputDirectory = resolve(request.outputDirectory);
+      const filePath = resolve(outputDirectory, request.filename);
+      const tempPath = join(
+        outputDirectory,
+        `.${request.filename}.${randomUUID()}.tmp`,
       );
-    }
 
-    if (!request.force && (await pathExists(filePath))) {
-      throw new DocumentSafetyError(
-        "Filing document output file already exists. Pass force to overwrite it.",
-      );
-    }
-
-    try {
-      await writeFile(tempPath, request.bytes, { flag: "wx" });
+      if (!isPathInsideDirectory(filePath, outputDirectory)) {
+        throw new DocumentSafetyError(
+          "Filing document output path escaped the configured output directory.",
+        );
+      }
 
       if (!request.force && (await pathExists(filePath))) {
         throw new DocumentSafetyError(
@@ -170,27 +152,39 @@ const nodeFilingDocumentWriter: FilingDocumentWriter = {
         );
       }
 
-      await rename(tempPath, filePath);
+      try {
+        await writeFile(tempPath, request.bytes, { flag: "wx" });
+        await hooks.beforeFinalize?.({ filePath, tempPath });
 
-      return { filePath };
-    } catch (error) {
-      await unlink(tempPath).catch(() => undefined);
+        if (request.force) {
+          await rename(tempPath, filePath);
+        } else {
+          await link(tempPath, filePath);
+          await unlink(tempPath);
+        }
 
-      if (error instanceof DocumentSafetyError) {
+        return { filePath };
+      } catch (error) {
+        await unlink(tempPath).catch(() => undefined);
+
+        if (error instanceof DocumentSafetyError) {
+          throw error;
+        }
+
+        if (isFileExistsError(error)) {
+          throw new DocumentSafetyError(
+            "Filing document output file already exists. Pass force to overwrite it.",
+            { cause: error },
+          );
+        }
+
         throw error;
       }
+    },
+  };
+}
 
-      if (isFileExistsError(error)) {
-        throw new DocumentSafetyError(
-          "Filing document output file already exists. Pass force to overwrite it.",
-          { cause: error },
-        );
-      }
-
-      throw error;
-    }
-  },
-};
+const nodeFilingDocumentWriter = createFilingDocumentWriter();
 
 function positiveInteger(value: number, label: string): number {
   if (!Number.isInteger(value) || value < 1) {
@@ -740,9 +734,8 @@ export async function retrieveFilingDocument(
     options.outputDirectory === undefined
       ? undefined
       : filenameForDocument(documentId, contentType, options.suggestedFilename);
-  const contentResponse = await options.contentFetcher.fetch({
+  const contentResponse = await options.client.requestBytes(contentUrl, {
     accept: contentType,
-    url: contentUrl,
   });
   const finalUrl = new URL(contentResponse.finalUrl, documentApiBaseUrl);
 
@@ -766,7 +759,7 @@ export async function retrieveFilingDocument(
   const bytes = await boundedDocumentBytes(contentResponse.body, maxBytes);
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   const retrievedAt =
-    options.clock?.now().toISOString() ?? metadataResponse.retrievedAt;
+    options.clock?.now().toISOString() ?? contentResponse.retrievedAt;
   const filePath =
     options.outputDirectory === undefined || filename === undefined
       ? undefined

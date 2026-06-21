@@ -62,6 +62,12 @@ class QueueCompaniesHouseClient implements CompaniesHouseClient {
 
     return Promise.resolve(next as CompaniesHouseJsonResponse<TData>);
   }
+
+  public requestBytes(): Promise<never> {
+    return Promise.reject(
+      new Error("Unexpected Companies House byte request."),
+    );
+  }
 }
 
 function fixtureText(name: string): string {

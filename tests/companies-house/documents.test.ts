@@ -1,21 +1,20 @@
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  type CompaniesHouseBytesRequestOptions,
+  type CompaniesHouseBytesResponse,
   type CompaniesHouseClient,
   type CompaniesHouseJsonResponse,
 } from "../../src/companies-house/client.js";
 import {
   retrieveFilingDocument,
-  type FilingDocumentContentFetcher,
-  type FilingDocumentContentRequest,
-  type FilingDocumentContentResponse,
   type FilingDocumentWriter,
 } from "../../src/companies-house/endpoints.js";
 import { DocumentSafetyError } from "../../src/contracts/errors.js";
@@ -25,26 +24,33 @@ const documentApiBaseUrl =
 const retrievedAt = "2026-02-03T04:05:06.789Z";
 
 class QueueCompaniesHouseClient implements CompaniesHouseClient {
-  public readonly requests: string[] = [];
+  public readonly byteRequests: {
+    readonly accept: string | undefined;
+    readonly request: string;
+  }[] = [];
+  public readonly jsonRequests: string[] = [];
   readonly #operations: string[];
-  readonly #pending: CompaniesHouseJsonResponse[];
+  readonly #pendingBytes: CompaniesHouseBytesResponse[];
+  readonly #pendingJson: CompaniesHouseJsonResponse[];
 
   public constructor(
-    responses: readonly CompaniesHouseJsonResponse[],
+    jsonResponses: readonly CompaniesHouseJsonResponse[],
+    byteResponses: readonly CompaniesHouseBytesResponse[] = [],
     operations: string[] = [],
   ) {
     this.#operations = operations;
-    this.#pending = [...responses];
+    this.#pendingBytes = [...byteResponses];
+    this.#pendingJson = [...jsonResponses];
   }
 
   public requestJson<TData = unknown>(
     pathOrUrl: string | URL,
   ): Promise<CompaniesHouseJsonResponse<TData>> {
     const request = pathOrUrl instanceof URL ? pathOrUrl.toString() : pathOrUrl;
-    this.requests.push(request);
+    this.jsonRequests.push(request);
     this.#operations.push(`metadata:${request}`);
 
-    const next = this.#pending.shift();
+    const next = this.#pendingJson.shift();
 
     if (next === undefined) {
       return Promise.reject(
@@ -54,30 +60,18 @@ class QueueCompaniesHouseClient implements CompaniesHouseClient {
 
     return Promise.resolve(next as CompaniesHouseJsonResponse<TData>);
   }
-}
 
-class QueueDocumentContentFetcher implements FilingDocumentContentFetcher {
-  public readonly requests: FilingDocumentContentRequest[] = [];
-  readonly #operations: string[];
-  readonly #pending: FilingDocumentContentResponse[];
-
-  public constructor(
-    responses: readonly FilingDocumentContentResponse[],
-    operations: string[] = [],
-  ) {
-    this.#operations = operations;
-    this.#pending = [...responses];
-  }
-
-  public fetch(
-    request: FilingDocumentContentRequest,
-  ): Promise<FilingDocumentContentResponse> {
-    this.requests.push(request);
+  public requestBytes(
+    pathOrUrl: string | URL,
+    options: CompaniesHouseBytesRequestOptions = {},
+  ): Promise<CompaniesHouseBytesResponse> {
+    const request = pathOrUrl instanceof URL ? pathOrUrl.toString() : pathOrUrl;
+    this.byteRequests.push({ accept: options.accept, request });
     this.#operations.push(
-      `content:${request.url.toString()}:${request.accept}`,
+      `content:${request}:${options.accept ?? "application/octet-stream"}`,
     );
 
-    const next = this.#pending.shift();
+    const next = this.#pendingBytes.shift();
 
     if (next === undefined) {
       return Promise.reject(
@@ -154,13 +148,20 @@ async function temporaryDirectory(): Promise<string> {
 
 function contentResponse(
   bytes: Uint8Array = fixtureBytes("document.pdf"),
-  overrides: Partial<FilingDocumentContentResponse> = {},
-): FilingDocumentContentResponse {
+  overrides: Partial<CompaniesHouseBytesResponse> = {},
+): CompaniesHouseBytesResponse {
   return {
     body: [bytes],
     contentLength: bytes.byteLength,
     contentType: "application/pdf; charset=binary",
     finalUrl: `${documentApiBaseUrl}/document/doc-pdf-001/content`,
+    headers: {
+      "content-length": String(bytes.byteLength),
+      "content-type": "application/pdf; charset=binary",
+    },
+    requestedUrl: `${documentApiBaseUrl}/document/doc-pdf-001/content`,
+    retrievedAt,
+    status: 200,
     ...overrides,
   };
 }
@@ -171,9 +172,6 @@ describe("Companies House filing document retrieval", () => {
     const documentBytes = fixtureBytes("document.pdf");
     const client = new QueueCompaniesHouseClient(
       [metadataResponse()],
-      operations,
-    );
-    const contentFetcher = new QueueDocumentContentFetcher(
       [contentResponse(documentBytes)],
       operations,
     );
@@ -181,7 +179,6 @@ describe("Companies House filing document retrieval", () => {
     const result = await retrieveFilingDocument({
       client,
       clock: { now: () => new Date(retrievedAt) },
-      contentFetcher,
       documentApiBaseUrl,
       documentId: "doc-pdf-001",
       maxBytes: 4096,
@@ -192,10 +189,10 @@ describe("Companies House filing document retrieval", () => {
       "metadata:/document/doc-pdf-001",
       `content:${documentApiBaseUrl}/document/doc-pdf-001/content:application/pdf`,
     ]);
-    expect(contentFetcher.requests).toEqual([
+    expect(client.byteRequests).toEqual([
       {
         accept: "application/pdf",
-        url: new URL("/document/doc-pdf-001/content", documentApiBaseUrl),
+        request: `${documentApiBaseUrl}/document/doc-pdf-001/content`,
       },
     ]);
     expect(result).toMatchObject({
@@ -214,19 +211,21 @@ describe("Companies House filing document retrieval", () => {
       "<html><body>Document</body></html>",
       "utf8",
     );
-    const xhtmlFetcher = new QueueDocumentContentFetcher([
-      contentResponse(xhtmlBytes, {
-        body: [xhtmlBytes],
-        contentLength: xhtmlBytes.byteLength,
-        contentType: "application/xhtml+xml; charset=utf-8",
-      }),
-    ]);
+    const xhtmlClient = new QueueCompaniesHouseClient(
+      [metadataResponse()],
+      [
+        contentResponse(xhtmlBytes, {
+          body: [xhtmlBytes],
+          contentLength: xhtmlBytes.byteLength,
+          contentType: "application/xhtml+xml; charset=utf-8",
+        }),
+      ],
+    );
 
     await expect(
       retrieveFilingDocument({
-        client: new QueueCompaniesHouseClient([metadataResponse()]),
+        client: xhtmlClient,
         clock: { now: () => new Date(retrievedAt) },
-        contentFetcher: xhtmlFetcher,
         documentApiBaseUrl,
         documentId: "doc-pdf-001",
         maxBytes: 4096,
@@ -236,14 +235,13 @@ describe("Companies House filing document retrieval", () => {
       contentType: "application/xhtml+xml",
       sha256: sha256Hex(xhtmlBytes),
     });
-    expect(xhtmlFetcher.requests.map((request) => request.accept)).toEqual([
+    expect(xhtmlClient.byteRequests.map((request) => request.accept)).toEqual([
       "application/xhtml+xml",
     ]);
 
     await expect(
       retrieveFilingDocument({
         client: new QueueCompaniesHouseClient([metadataResponse()]),
-        contentFetcher: new QueueDocumentContentFetcher([]),
         documentApiBaseUrl,
         documentId: "doc-pdf-001",
         requestedContentType: "text/html",
@@ -252,16 +250,18 @@ describe("Companies House filing document retrieval", () => {
   });
 
   it("rejects oversized documents from Content-Length before reading bytes", async () => {
-    const contentFetcher = new QueueDocumentContentFetcher([
-      contentResponse(fixtureBytes("document.pdf"), {
-        contentLength: 4097,
-      }),
-    ]);
+    const client = new QueueCompaniesHouseClient(
+      [metadataResponse()],
+      [
+        contentResponse(fixtureBytes("document.pdf"), {
+          contentLength: 4097,
+        }),
+      ],
+    );
 
     await expect(
       retrieveFilingDocument({
-        client: new QueueCompaniesHouseClient([metadataResponse()]),
-        contentFetcher,
+        client,
         documentApiBaseUrl,
         documentId: "doc-pdf-001",
         maxBytes: 4096,
@@ -275,13 +275,15 @@ describe("Companies House filing document retrieval", () => {
 
     await expect(
       retrieveFilingDocument({
-        client: new QueueCompaniesHouseClient([metadataResponse()]),
-        contentFetcher: new QueueDocumentContentFetcher([
-          contentResponse(Buffer.concat([firstChunk, secondChunk]), {
-            body: [firstChunk, secondChunk],
-            contentLength: undefined,
-          }),
-        ]),
+        client: new QueueCompaniesHouseClient(
+          [metadataResponse()],
+          [
+            contentResponse(Buffer.concat([firstChunk, secondChunk]), {
+              body: [firstChunk, secondChunk],
+              contentLength: undefined,
+            }),
+          ],
+        ),
         documentApiBaseUrl,
         documentId: "doc-pdf-001",
         maxBytes: 4096,
@@ -292,12 +294,14 @@ describe("Companies House filing document retrieval", () => {
   it("refuses redirects to hosts outside the configured document API host", async () => {
     await expect(
       retrieveFilingDocument({
-        client: new QueueCompaniesHouseClient([metadataResponse()]),
-        contentFetcher: new QueueDocumentContentFetcher([
-          contentResponse(fixtureBytes("document.pdf"), {
-            finalUrl: "https://evil.example/document/doc-pdf-001/content",
-          }),
-        ]),
+        client: new QueueCompaniesHouseClient(
+          [metadataResponse()],
+          [
+            contentResponse(fixtureBytes("document.pdf"), {
+              finalUrl: "https://evil.example/document/doc-pdf-001/content",
+            }),
+          ],
+        ),
         documentApiBaseUrl,
         documentId: "doc-pdf-001",
         maxBytes: 4096,
@@ -310,10 +314,10 @@ describe("Companies House filing document retrieval", () => {
     const documentBytes = fixtureBytes("document.pdf");
 
     const result = await retrieveFilingDocument({
-      client: new QueueCompaniesHouseClient([metadataResponse()]),
-      contentFetcher: new QueueDocumentContentFetcher([
-        contentResponse(documentBytes),
-      ]),
+      client: new QueueCompaniesHouseClient(
+        [metadataResponse()],
+        [contentResponse(documentBytes)],
+      ),
       documentApiBaseUrl,
       documentId: "doc-pdf-001",
       maxBytes: 4096,
@@ -339,7 +343,6 @@ describe("Companies House filing document retrieval", () => {
       await expect(
         retrieveFilingDocument({
           client: new QueueCompaniesHouseClient([metadataResponse()]),
-          contentFetcher: new QueueDocumentContentFetcher([]),
           documentApiBaseUrl,
           documentId: "doc-pdf-001",
           outputDirectory,
@@ -354,10 +357,10 @@ describe("Companies House filing document retrieval", () => {
     const documentBytes = fixtureBytes("document.pdf");
 
     const initial = await retrieveFilingDocument({
-      client: new QueueCompaniesHouseClient([metadataResponse()]),
-      contentFetcher: new QueueDocumentContentFetcher([
-        contentResponse(documentBytes),
-      ]),
+      client: new QueueCompaniesHouseClient(
+        [metadataResponse()],
+        [contentResponse(documentBytes)],
+      ),
       documentApiBaseUrl,
       documentId: "doc-pdf-001",
       maxBytes: 4096,
@@ -367,10 +370,10 @@ describe("Companies House filing document retrieval", () => {
 
     await expect(
       retrieveFilingDocument({
-        client: new QueueCompaniesHouseClient([metadataResponse()]),
-        contentFetcher: new QueueDocumentContentFetcher([
-          contentResponse(documentBytes),
-        ]),
+        client: new QueueCompaniesHouseClient(
+          [metadataResponse()],
+          [contentResponse(documentBytes)],
+        ),
         documentApiBaseUrl,
         documentId: "doc-pdf-001",
         maxBytes: 4096,
@@ -381,10 +384,10 @@ describe("Companies House filing document retrieval", () => {
 
     const replacementBytes = Buffer.from("%PDF-1.4\nreplacement\n%%EOF\n");
     const replacement = await retrieveFilingDocument({
-      client: new QueueCompaniesHouseClient([metadataResponse()]),
-      contentFetcher: new QueueDocumentContentFetcher([
-        contentResponse(replacementBytes),
-      ]),
+      client: new QueueCompaniesHouseClient(
+        [metadataResponse()],
+        [contentResponse(replacementBytes)],
+      ),
       documentApiBaseUrl,
       documentId: "doc-pdf-001",
       force: true,
@@ -398,5 +401,36 @@ describe("Companies House filing document retrieval", () => {
     await expect(readFile(replacement.filePath ?? "")).resolves.toEqual(
       replacementBytes,
     );
+  });
+
+  it("refuses a non-force write if the final path appears during atomic finalization", async () => {
+    const { createFilingDocumentWriter } =
+      await import("../../src/companies-house/endpoints.js");
+
+    const outputDirectory = await temporaryDirectory();
+    const finalPath = join(outputDirectory, "document.pdf");
+    const racingBytes = Buffer.from("racing writer\n", "utf8");
+    const writer = createFilingDocumentWriter({
+      beforeFinalize: async ({ filePath }) => {
+        expect(filePath).toBe(finalPath);
+        await writeFile(filePath, racingBytes, { flag: "wx" });
+      },
+    });
+
+    await expect(
+      retrieveFilingDocument({
+        client: new QueueCompaniesHouseClient(
+          [metadataResponse()],
+          [contentResponse(fixtureBytes("document.pdf"))],
+        ),
+        documentApiBaseUrl,
+        documentId: "doc-pdf-001",
+        maxBytes: 4096,
+        outputDirectory,
+        suggestedFilename: "document.pdf",
+        writer,
+      }),
+    ).rejects.toBeInstanceOf(DocumentSafetyError);
+    await expect(readFile(finalPath)).resolves.toEqual(racingBytes);
   });
 });
