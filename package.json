@@ -9,7 +9,8 @@
     "node": ">=22 <23"
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts/unavailable.mjs"
   ],
   "main": "./dist/cli/main.js",
   "types": "./dist/cli/main.d.ts",
@@ -25,18 +26,18 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json && chmod 755 dist/cli/main.js",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "format:check": "prettier --check package.json tsconfig.json vitest.config.ts eslint.config.js \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js scripts/unavailable.mjs \"src/**/*.ts\" \"tests/**/*.ts\"",
     "doctor": "npm run cli -- doctor",
     "cli": "node --enable-source-maps dist/cli/main.js",
-    "mcp": "node --enable-source-maps dist/mcp/main.js",
-    "examples:select": "node --enable-source-maps dist/examples/select.js",
-    "docs:mermaid": "node --enable-source-maps dist/docs/validate-mermaid.js",
-    "docs:links": "node --enable-source-maps dist/docs/check-links.js",
+    "mcp": "node scripts/unavailable.mjs \"MCP service\"",
+    "examples:select": "node scripts/unavailable.mjs \"example selector\"",
+    "docs:mermaid": "node scripts/unavailable.mjs \"Mermaid documentation validation\"",
+    "docs:links": "node scripts/unavailable.mjs \"documentation link checking\"",
     "verify:commit": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "verify:push": "npm run verify:commit && npm run test:coverage && npm audit --omit=dev",
     "verify:release": "npm run verify:push && npm audit"
@@ -48,7 +49,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/node": "26.0.0",
+    "@types/node": "22.20.0",
     "@vitest/coverage-v8": "4.1.9",
     "eslint": "10.5.0",
     "prettier": "3.8.4",
