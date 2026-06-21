@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-import { realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
 
 import { Command } from "commander";
 
@@ -20,44 +19,23 @@ export function createProgram(): Command {
   return program;
 }
 
-function isExecutableEntrypoint(): boolean {
-  const entrypoint = process.argv[1];
-
-  if (entrypoint === undefined) {
-    return false;
-  }
-
-  const entrypointRealPath = realPathOrUndefined(entrypoint);
-
-  if (entrypointRealPath === undefined) {
-    return false;
-  }
-
-  return entrypointRealPath === realpathSync(fileURLToPath(import.meta.url));
+export async function runCli(
+  argv: readonly string[] = process.argv,
+): Promise<void> {
+  await createProgram().parseAsync(Array.from(argv));
 }
 
-function realPathOrUndefined(path: string): string | undefined {
-  try {
-    return realpathSync(path);
-  } catch (error) {
-    if (isExpectedPathResolutionError(error)) {
-      return undefined;
-    }
+function isExecutableEntrypoint(
+  argv: readonly string[] = process.argv,
+): boolean {
+  const entrypoint = argv[1];
 
-    throw error;
-  }
-}
-
-function isExpectedPathResolutionError(
-  error: unknown,
-): error is NodeJS.ErrnoException {
   return (
-    error instanceof Error &&
-    "code" in error &&
-    (error.code === "ENOENT" || error.code === "ENOTDIR")
+    entrypoint !== undefined &&
+    import.meta.url === pathToFileURL(entrypoint).href
   );
 }
 
 if (isExecutableEntrypoint()) {
-  await createProgram().parseAsync(process.argv);
+  await runCli();
 }

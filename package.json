@@ -9,6 +9,7 @@
     "node": ">=22 <23"
   },
   "files": [
+    "bin/dossier.mjs",
     "dist",
     "scripts/unavailable.mjs"
   ],
@@ -22,16 +23,16 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "dossier": "./dist/cli/main.js"
+    "dossier": "./bin/dossier.mjs"
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc --project tsconfig.json && chmod 755 dist/cli/main.js",
+    "build": "tsc --project tsconfig.json && chmod 755 dist/cli/main.js bin/dossier.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js scripts/unavailable.mjs \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js bin/dossier.mjs scripts/unavailable.mjs \"src/**/*.ts\" \"tests/**/*.ts\"",
     "doctor": "npm run cli -- doctor",
     "cli": "node --enable-source-maps dist/cli/main.js",
     "mcp": "node scripts/unavailable.mjs \"MCP service\"",
