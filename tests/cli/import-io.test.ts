@@ -7,12 +7,14 @@ import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
+import { execPackageCommand } from "../helpers/package-command.js";
+
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 
 describe("built CLI module import", () => {
   it("prints help without explicit filesystem path API calls", async () => {
-    await execFileAsync("npm", ["run", "build"], {
+    await execPackageCommand("npm", ["run", "build"], {
       cwd: repositoryRoot,
     });
 

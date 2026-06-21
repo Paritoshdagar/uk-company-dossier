@@ -6,8 +6,15 @@ import { promisify } from "node:util";
 
 import { beforeAll, describe, expect, it } from "vitest";
 
+import {
+  execPackageCommand,
+  packageCommand,
+  packageCommandOptions,
+} from "../helpers/package-command.js";
+
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
+const packageBinSmokeTimeoutMs = 30_000;
 
 describe("packaged dossier bin", () => {
   beforeAll(async () => {
@@ -15,17 +22,19 @@ describe("packaged dossier bin", () => {
       force: true,
       recursive: true,
     });
-    await execFileAsync("npm", ["run", "build"], {
+    await execPackageCommand("npm", ["run", "build"], {
       cwd: repositoryRoot,
     });
-  });
+  }, packageBinSmokeTimeoutMs);
 
   async function expectHelpCommand(
     executable: string,
     args: string[],
+    options: { readonly shell?: boolean | string } = {},
   ): Promise<void> {
     const { stdout, stderr } = await execFileAsync(executable, args, {
       cwd: repositoryRoot,
+      shell: options.shell,
     });
 
     expect(stderr).toBe("");
@@ -40,23 +49,33 @@ describe("packaged dossier bin", () => {
   });
 
   it("prints help from the direct launcher", async () => {
-    await expectHelpCommand(join(repositoryRoot, "bin", "dossier.mjs"), [
-      "--help",
-    ]);
+    const launcherPath = join(repositoryRoot, "bin", "dossier.mjs");
+
+    if (process.platform === "win32") {
+      await expectHelpCommand(process.execPath, [launcherPath, "--help"]);
+    } else {
+      await expectHelpCommand(launcherPath, ["--help"]);
+    }
   });
 
-  it("prints help when invoked through a symlinked bin path", async () => {
-    const binDirectory = await mkdtemp(join(tmpdir(), "dossier-bin-"));
-    const symlinkedBinPath = join(binDirectory, "dossier");
+  it.skipIf(process.platform === "win32")(
+    "prints help when invoked through a symlinked bin path",
+    async () => {
+      const binDirectory = await mkdtemp(join(tmpdir(), "dossier-bin-"));
+      const symlinkedBinPath = join(binDirectory, "dossier");
 
-    await symlink(join(repositoryRoot, "bin", "dossier.mjs"), symlinkedBinPath);
+      await symlink(
+        join(repositoryRoot, "bin", "dossier.mjs"),
+        symlinkedBinPath,
+      );
 
-    await expectHelpCommand(symlinkedBinPath, ["--help"]);
-  });
+      await expectHelpCommand(symlinkedBinPath, ["--help"]);
+    },
+  );
 
   it("prints help from a local packed npx install", async () => {
     const packageDirectory = await mkdtemp(join(tmpdir(), "dossier-pack-"));
-    const { stdout: packedFileName } = await execFileAsync(
+    const { stdout: packedFileName } = await execPackageCommand(
       "npm",
       ["pack", "--pack-destination", packageDirectory, "--silent"],
       {
@@ -65,12 +84,10 @@ describe("packaged dossier bin", () => {
     );
     const packedFilePath = join(packageDirectory, packedFileName.trim());
 
-    await expectHelpCommand("npx", [
-      "--yes",
-      "--package",
-      packedFilePath,
-      "dossier",
-      "--help",
-    ]);
+    await expectHelpCommand(
+      packageCommand("npx"),
+      ["--yes", "--package", packedFilePath, "dossier", "--help"],
+      packageCommandOptions({}),
+    );
   });
 });

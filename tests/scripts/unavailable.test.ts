@@ -5,6 +5,11 @@ import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
+import {
+  packageCommand,
+  packageCommandOptions,
+} from "../helpers/package-command.js";
+
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 
@@ -17,10 +22,12 @@ interface CommandResult {
 async function runUnavailableCommand(
   executable: string,
   args: string[],
+  options: { readonly shell?: boolean | string } = {},
 ): Promise<CommandResult> {
   try {
     const { stderr, stdout } = await execFileAsync(executable, args, {
       cwd: repositoryRoot,
+      shell: options.shell,
     });
 
     return {
@@ -79,11 +86,11 @@ describe("unavailable planned capability scripts", () => {
   it.each([["mcp", "MCP service"]])(
     "%s exits 2 without claiming the planned capability exists",
     async (scriptName, capabilityName) => {
-      const result = await runUnavailableCommand("npm", [
-        "run",
-        "--silent",
-        scriptName,
-      ]);
+      const result = await runUnavailableCommand(
+        packageCommand("npm"),
+        ["run", "--silent", scriptName],
+        packageCommandOptions({}),
+      );
 
       expectUnavailableResult(result, capabilityName);
     },
@@ -95,11 +102,11 @@ describe("available documentation quality scripts", () => {
     ["docs:links", "Documentation link checks passed.\n"],
     ["docs:mermaid", "Mermaid documentation checks passed.\n"],
   ])("%s exits 0 with a concise stdout message", async (scriptName, stdout) => {
-    const result = await runUnavailableCommand("npm", [
-      "run",
-      "--silent",
-      scriptName,
-    ]);
+    const result = await runUnavailableCommand(
+      packageCommand("npm"),
+      ["run", "--silent", scriptName],
+      packageCommandOptions({}),
+    );
 
     expect(result.code).toBe(0);
     expect(result.stdout).toBe(stdout);

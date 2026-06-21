@@ -6,21 +6,11 @@ import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
+import { execPackageCommand } from "../helpers/package-command.js";
+
 const execFile = promisify(execFileCallback);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
-const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 const packageExportSmokeTimeoutMs = 20_000;
-
-async function execFileAtRepository(
-  file: string,
-  args: readonly string[],
-): Promise<{ readonly stdout: string; readonly stderr: string }> {
-  return execFile(file, [...args], {
-    cwd: repositoryRoot,
-    env: process.env,
-    maxBuffer: 10 * 1024 * 1024,
-  });
-}
 
 describe("published package contract surface", () => {
   it(
@@ -31,14 +21,21 @@ describe("published package contract surface", () => {
       );
 
       try {
-        await execFileAtRepository(npmExecutable, ["run", "build"]);
+        await execPackageCommand("npm", ["run", "build"], {
+          cwd: repositoryRoot,
+          env: process.env,
+          maxBuffer: 10 * 1024 * 1024,
+        });
 
-        const { stdout } = await execFileAtRepository(npmExecutable, [
-          "pack",
-          "--pack-destination",
-          temporaryRoot,
-          "--silent",
-        ]);
+        const { stdout } = await execPackageCommand(
+          "npm",
+          ["pack", "--pack-destination", temporaryRoot, "--silent"],
+          {
+            cwd: repositoryRoot,
+            env: process.env,
+            maxBuffer: 10 * 1024 * 1024,
+          },
+        );
         const tarballName = stdout.trim().split(/\r?\n/u).at(-1);
 
         expect(tarballName).toMatch(/\.tgz$/u);
@@ -48,8 +45,8 @@ describe("published package contract surface", () => {
         const tarballPath = join(temporaryRoot, tarballName ?? "");
 
         await mkdir(installRoot);
-        await execFile(
-          npmExecutable,
+        await execPackageCommand(
+          "npm",
           [
             "install",
             "--silent",
