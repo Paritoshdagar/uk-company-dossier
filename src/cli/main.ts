@@ -112,15 +112,18 @@ const defaultCliDependencies = {
   setExitCode: (code: number) => {
     process.exitCode = code;
   },
+  startMcp: async () => {
+    const { startDossierMcpServer } = await import("../mcp/server.js");
+
+    await startDossierMcpServer();
+  },
   writeErr: (text: string) => {
     process.stderr.write(text);
   },
   writeOut: (text: string) => {
     process.stdout.write(text);
   },
-} satisfies Required<
-  Omit<CliDependencies, "doctorChecks" | "gateway" | "startMcp">
->;
+} satisfies Required<Omit<CliDependencies, "doctorChecks" | "gateway">>;
 
 function createRuntime(
   dependencies: CliDependencies = {},
