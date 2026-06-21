@@ -20,6 +20,13 @@ const knownRejectionReasons = new Set([
   "company-status-mismatch",
 ]);
 
+export class RandomSelectionInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RandomSelectionInputError";
+  }
+}
+
 export interface RandomPickerCandidate {
   readonly companyNumber: string;
   readonly companyStatus?: string;
@@ -268,6 +275,14 @@ export function selectRandomCompanies(
       }
     }
 
+    if (successfulSelections < stratum.count) {
+      throw new RandomSelectionInputError(
+        `Stratum ${stratum.name} declared count ${String(
+          stratum.count,
+        )} but successful selections ${String(successfulSelections)} were available.`,
+      );
+    }
+
     return selectedForStratum;
   });
 
@@ -286,6 +301,38 @@ export function selectRandomCompanies(
   };
 }
 
+export function validateRandomPickerCandidateSnapshot(
+  value: unknown,
+): RandomPickerCandidateSnapshot {
+  assertPlainObject(value, "candidate snapshot");
+  rejectUnknownKeys(value, "candidate snapshot", [
+    "candidates",
+    "schemaVersion",
+    "snapshotDate",
+    "snapshotSha256",
+    "snapshotUri",
+  ]);
+  assertString(value.schemaVersion, "candidate snapshot.schemaVersion");
+  assertArray(value.candidates, "candidate snapshot.candidates");
+  assertIsoCalendarDate(value.snapshotDate, "candidate snapshot.snapshotDate");
+  assertSha256Hex(value.snapshotSha256, "candidate snapshot.snapshotSha256");
+  assertUri(value.snapshotUri, "candidate snapshot.snapshotUri");
+
+  if (value.schemaVersion !== schemaVersion) {
+    throw new RandomSelectionInputError(
+      `Unsupported candidate snapshot schema version: ${value.schemaVersion}`,
+    );
+  }
+
+  return {
+    candidates: value.candidates.map(validateRandomPickerCandidate),
+    schemaVersion: value.schemaVersion,
+    snapshotDate: value.snapshotDate,
+    snapshotSha256: value.snapshotSha256,
+    snapshotUri: value.snapshotUri,
+  };
+}
+
 export function validateRandomSelectionPolicy(
   value: unknown,
 ): RandomSelectionPolicy {
@@ -297,7 +344,7 @@ export function validateRandomSelectionPolicy(
   assertArray(value.exclusions, "policy.exclusions");
 
   if (value.schemaVersion !== schemaVersion) {
-    throw new Error(
+    throw new RandomSelectionInputError(
       `Unsupported policy schema version: ${value.schemaVersion}`,
     );
   }
@@ -328,7 +375,9 @@ export function validateRandomSelectionPolicy(
     );
 
     if (stratumNames.has(stratum.name)) {
-      throw new Error(`Duplicate policy stratum: ${stratum.name}`);
+      throw new RandomSelectionInputError(
+        `Duplicate policy stratum: ${stratum.name}`,
+      );
     }
 
     stratumNames.add(stratum.name);
@@ -357,7 +406,9 @@ export function validateRandomSelectionPolicy(
       );
 
       if (!knownRejectionReasons.has(exclusion.reason)) {
-        throw new Error(`Unknown exclusion reason: ${exclusion.reason}`);
+        throw new RandomSelectionInputError(
+          `Unknown exclusion reason: ${exclusion.reason}`,
+        );
       }
 
       return {
@@ -378,11 +429,11 @@ export function validateRandomSelectionPolicy(
 async function main(argv: readonly string[]): Promise<void> {
   const args = parseCliArgs(argv);
   const [snapshot, policy] = await Promise.all([
-    readJsonFile<RandomPickerCandidateSnapshot>(args.candidates),
+    readJsonFile<unknown>(args.candidates),
     readJsonFile<unknown>(args.policy),
   ]);
   const manifest = selectRandomCompanies(
-    snapshot,
+    validateRandomPickerCandidateSnapshot(snapshot),
     validateRandomSelectionPolicy(policy),
     args.seed,
   );
@@ -390,9 +441,64 @@ async function main(argv: readonly string[]): Promise<void> {
   await writeFile(args.output, formatRandomSelectionManifest(manifest), "utf8");
 }
 
+function validateRandomPickerCandidate(
+  value: unknown,
+  index: number,
+): RandomPickerCandidate {
+  const candidatePath = indexedPath("candidate snapshot.candidates", index);
+
+  assertPlainObject(value, candidatePath);
+  rejectUnknownKeys(value, candidatePath, [
+    "companyNumber",
+    "companyStatus",
+    "eligibilityPool",
+    "retrievalFailure",
+    "snapshotDate",
+    "snapshotSource",
+  ]);
+  assertString(value.companyNumber, `${candidatePath}.companyNumber`);
+  assertOptionalString(value.companyStatus, `${candidatePath}.companyStatus`);
+  assertString(value.eligibilityPool, `${candidatePath}.eligibilityPool`);
+  assertIsoCalendarDate(value.snapshotDate, `${candidatePath}.snapshotDate`);
+  assertUri(value.snapshotSource, `${candidatePath}.snapshotSource`);
+
+  return {
+    companyNumber: value.companyNumber,
+    ...(value.companyStatus === undefined
+      ? {}
+      : { companyStatus: value.companyStatus }),
+    eligibilityPool: value.eligibilityPool,
+    ...(value.retrievalFailure === undefined
+      ? {}
+      : {
+          retrievalFailure: validateRetrievalFailure(
+            value.retrievalFailure,
+            `${candidatePath}.retrievalFailure`,
+          ),
+        }),
+    snapshotDate: value.snapshotDate,
+    snapshotSource: value.snapshotSource,
+  };
+}
+
+function validateRetrievalFailure(
+  value: unknown,
+  name: string,
+): NonNullable<RandomPickerCandidate["retrievalFailure"]> {
+  assertPlainObject(value, name);
+  rejectUnknownKeys(value, name, ["message", "reason"]);
+  assertString(value.reason, `${name}.reason`);
+  assertOptionalString(value.message, `${name}.message`);
+
+  return {
+    ...(value.message === undefined ? {} : { message: value.message }),
+    reason: value.reason,
+  };
+}
+
 function assertArray(value: unknown, name: string): asserts value is unknown[] {
   if (!Array.isArray(value)) {
-    throw new Error(`${name} must be an array.`);
+    throw new RandomSelectionInputError(`${name} must be an array.`);
   }
 }
 
@@ -401,7 +507,7 @@ function assertPlainObject(
   name: string,
 ): asserts value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${name} must be an object.`);
+    throw new RandomSelectionInputError(`${name} must be an object.`);
   }
 }
 
@@ -410,13 +516,60 @@ function assertPositiveInteger(
   name: string,
 ): asserts value is number {
   if (!Number.isInteger(value) || typeof value !== "number" || value < 1) {
-    throw new Error(`${name} must be a positive integer.`);
+    throw new RandomSelectionInputError(`${name} must be a positive integer.`);
   }
 }
 
 function assertString(value: unknown, name: string): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`${name} must be a non-empty string.`);
+    throw new RandomSelectionInputError(`${name} must be a non-empty string.`);
+  }
+}
+
+function assertIsoCalendarDate(
+  value: unknown,
+  name: string,
+): asserts value is string {
+  assertString(value, name);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new RandomSelectionInputError(
+      `${name} must be an ISO calendar date.`,
+    );
+  }
+}
+
+function assertOptionalString(
+  value: unknown,
+  name: string,
+): asserts value is string | undefined {
+  if (value === undefined) {
+    return;
+  }
+
+  assertString(value, name);
+}
+
+function assertSha256Hex(
+  value: unknown,
+  name: string,
+): asserts value is string {
+  assertString(value, name);
+
+  if (!/^[0-9a-f]{64}$/.test(value)) {
+    throw new RandomSelectionInputError(
+      `${name} must be a lowercase SHA-256 hex string.`,
+    );
+  }
+}
+
+function assertUri(value: unknown, name: string): asserts value is string {
+  assertString(value, name);
+
+  try {
+    new URL(value);
+  } catch {
+    throw new RandomSelectionInputError(`${name} must be an absolute URI.`);
   }
 }
 
@@ -484,12 +637,12 @@ async function readJsonFile<T>(path: string): Promise<T> {
 }
 
 function rejectUnknownPolicyKeys(value: Record<string, unknown>): void {
-  rejectUnknownKeys(value, "policy", [
-    "algorithm",
-    "exclusions",
-    "schemaVersion",
-    "strata",
-  ]);
+  rejectUnknownKeys(
+    value,
+    "policy",
+    ["algorithm", "exclusions", "schemaVersion", "strata"],
+    { rejectManualOverrides: true },
+  );
 }
 
 function requiredCliArg(
@@ -499,7 +652,7 @@ function requiredCliArg(
   const value = parsed[key];
 
   if (value === undefined) {
-    throw new Error(`Missing required argument: --${key}`);
+    throw new RandomSelectionInputError(`Missing required argument: --${key}`);
   }
 
   return value;
@@ -509,6 +662,7 @@ function rejectUnknownKeys(
   value: Record<string, unknown>,
   name: string,
   allowedKeys: readonly string[],
+  options: { readonly rejectManualOverrides?: boolean } = {},
 ): void {
   const allowedKeySet = new Set(allowedKeys);
   const unknownKey = Object.keys(value).find((key) => !allowedKeySet.has(key));
@@ -517,11 +671,18 @@ function rejectUnknownKeys(
     return;
   }
 
-  if (unknownKey.toLowerCase().includes("manual")) {
-    throw new Error(`Manual override policy fields are not supported.`);
+  if (
+    options.rejectManualOverrides === true &&
+    unknownKey.toLowerCase().includes("manual")
+  ) {
+    throw new RandomSelectionInputError(
+      `Manual override policy fields are not supported.`,
+    );
   }
 
-  throw new Error(`${name} includes unknown key: ${unknownKey}`);
+  throw new RandomSelectionInputError(
+    `${name} includes unknown key: ${unknownKey}`,
+  );
 }
 
 function isCliArgKey(value: string): value is keyof ParsedCliArgs {
