@@ -2,7 +2,7 @@
 
 ## Repository code
 
-Unless a file says otherwise, the PolyForm Noncommercial License 1.0.0 in [LICENSE](LICENSE) governs repository-authored source code, scripts, configuration examples, documentation, and examples. It does not determine the terms that apply to generated data, Companies House or other public-register data, or third-party material.
+Unless a file says otherwise, the PolyForm Noncommercial License 1.0.0 in [LICENSE](LICENSE) governs repository-authored source code, scripts, configuration files, documentation, and examples. It does not determine the terms that apply to generated data, Companies House or other public-register data, or third-party material.
 
 ## Companies House and public-register data
 

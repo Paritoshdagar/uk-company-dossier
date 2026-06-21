@@ -10,7 +10,7 @@ The PolyForm Noncommercial License 1.0.0 in [LICENSE](LICENSE) governs use of th
 
 ## What material is covered?
 
-Unless a file says otherwise, repository-authored source code, scripts, configuration examples, documentation, and examples are offered under [LICENSE](LICENSE). Generated data, public-register facts, and third-party material or data remain under their own applicable terms and are not relicensed by this repository. The canonical [LICENSE](LICENSE) governs. This scope summary does not modify the licence and is not legal advice.
+Unless a file says otherwise, repository-authored source code, scripts, configuration files, documentation, and examples are offered under [LICENSE](LICENSE). Generated data, public-register facts, and third-party material or data remain under their own applicable terms and are not relicensed by this repository. The canonical [LICENSE](LICENSE) governs. This scope summary does not modify the licence and is not legal advice.
 
 ## May I use the repository commercially?
 
