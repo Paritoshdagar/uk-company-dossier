@@ -52,6 +52,8 @@
   "devDependencies": {
     "@types/node": "22.20.0",
     "@vitest/coverage-v8": "4.1.9",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "eslint": "10.5.0",
     "prettier": "3.8.4",
     "typescript": "6.0.3",

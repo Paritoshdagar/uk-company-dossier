@@ -1,0 +1,391 @@
+{
+  "$id": "https://raw.githubusercontent.com/Paritoshdagar/uk-company-dossier/main/schemas/company-evidence.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Versioned evidence-linked UK company dossier contract.",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0",
+      "description": "Version of the company evidence contract."
+    },
+    "company": {
+      "$ref": "#/$defs/CompanyIdentity"
+    },
+    "generatedAt": {
+      "description": "RFC3339 timestamp recording when this dossier was generated.",
+      "format": "date-time",
+      "type": "string"
+    },
+    "sections": {
+      "additionalProperties": {
+        "$ref": "#/$defs/EvidenceSection"
+      },
+      "description": "Nonempty map of stable section keys to evidence sections.",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/SectionKey"
+      },
+      "type": "object"
+    },
+    "sourceAttribution": {
+      "$ref": "#/$defs/SourceAttribution"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "company",
+    "generatedAt",
+    "sections",
+    "sourceAttribution"
+  ],
+  "title": "CompanyDossier",
+  "type": "object",
+  "$defs": {
+    "CompanyIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "companyNumber": {
+          "description": "Canonical Companies House company number: uppercase 8-character alphanumeric.",
+          "pattern": "^[0-9A-Z]{8}$",
+          "type": "string"
+        },
+        "registeredName": {
+          "$ref": "#/$defs/NonBlankString",
+          "description": "Optional nonblank registered company name."
+        }
+      },
+      "required": ["companyNumber"],
+      "type": "object"
+    },
+    "DerivedFact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/StableIdentifier"
+        },
+        "type": {
+          "$ref": "#/$defs/FactType"
+        },
+        "origin": {
+          "const": "derived"
+        },
+        "ruleId": {
+          "$ref": "#/$defs/StableIdentifier",
+          "description": "Stable nonblank rule identifier required for derived facts."
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": ["id", "type", "origin", "ruleId", "value", "evidence"],
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "description": "Reference to a retrieved source payload, including HTTPS source URI, RFC3339 retrieval timestamp, and lowercase SHA-256 payload digest.",
+      "properties": {
+        "sourceUri": {
+          "description": "HTTPS URI for the source payload or document.",
+          "format": "uri",
+          "pattern": "^https://",
+          "type": "string"
+        },
+        "retrievedAt": {
+          "description": "RFC3339 timestamp recording when the evidence payload was retrieved.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "payloadSha256": {
+          "description": "Lowercase hexadecimal SHA-256 digest of the evidence payload.",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "documentId": {
+          "$ref": "#/$defs/NonBlankString",
+          "description": "Optional stable upstream document identifier."
+        }
+      },
+      "required": ["sourceUri", "retrievedAt", "payloadSha256"],
+      "type": "object"
+    },
+    "EvidenceSection": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            },
+            "required": ["status"],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "facts": {
+                "minItems": 1,
+                "type": "array"
+              },
+              "errors": {
+                "maxItems": 0,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not_applicable"
+              }
+            },
+            "required": ["status"],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "facts": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "warnings": {
+                "minItems": 1,
+                "type": "array"
+              },
+              "errors": {
+                "maxItems": 0,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["partial", "unavailable"]
+              }
+            },
+            "required": ["status"],
+            "type": "object"
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "warnings": {
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "errors": {
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            },
+            "required": ["status"],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "facts": {
+                "maxItems": 0,
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
+      "description": "Strict evidence section. Complete sections have facts and no errors; partial/unavailable sections must explain incompleteness; not_applicable sections contain explanatory warnings only.",
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/EvidenceStatus"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/NonBlankString"
+          },
+          "type": "array"
+        },
+        "errors": {
+          "items": {
+            "$ref": "#/$defs/NonBlankString"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["status", "facts", "warnings", "errors"],
+      "type": "object"
+    },
+    "EvidenceStatus": {
+      "description": "Evidence completeness status. complete means facts are present and no errors occurred; partial means facts may be incomplete and warnings or errors explain why; unavailable means the section could not be fetched and has no facts; not_applicable means no facts or errors apply and warnings explain why.",
+      "enum": ["complete", "partial", "unavailable", "not_applicable"],
+      "type": "string"
+    },
+    "Fact": {
+      "description": "Strict discriminated union of source facts and rule-derived facts.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/SourceFact"
+        },
+        {
+          "$ref": "#/$defs/DerivedFact"
+        }
+      ]
+    },
+    "FactType": {
+      "description": "Normalized lowercase fact type.",
+      "pattern": "^[a-z][a-z0-9._:-]*$",
+      "type": "string"
+    },
+    "JsonValue": {
+      "description": "Any JSON-compatible value.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonBlankString": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "OfficialCompaniesHouseUri": {
+      "description": "Official Companies House or GOV.UK HTTPS URI.",
+      "format": "uri",
+      "pattern": "^https://(api|developer|find-and-update)\\.company-information\\.service\\.gov\\.uk(/|$)|^https://www\\.gov\\.uk(/|$)",
+      "type": "string"
+    },
+    "SectionKey": {
+      "description": "Normalized lowercase section key.",
+      "pattern": "^[a-z][a-z0-9_:-]*$",
+      "type": "string"
+    },
+    "SourceAttribution": {
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "const": "Companies House",
+          "description": "Official upstream data provider."
+        },
+        "sourceUri": {
+          "$ref": "#/$defs/OfficialCompaniesHouseUri",
+          "description": "Official Companies House HTTPS source URI."
+        },
+        "licenceUri": {
+          "$ref": "#/$defs/OfficialCompaniesHouseUri",
+          "description": "Official Companies House or GOV.UK HTTPS licence URI."
+        },
+        "dataTermsUri": {
+          "$ref": "#/$defs/OfficialCompaniesHouseUri",
+          "description": "Official Companies House or GOV.UK HTTPS data terms URI."
+        },
+        "retrievalCaveat": {
+          "$ref": "#/$defs/NonBlankString",
+          "description": "Renderer-safe caveat explaining retrieval timing and possible source changes."
+        },
+        "nonAffiliationStatement": {
+          "$ref": "#/$defs/NonBlankString",
+          "description": "Renderer-safe non-affiliation statement."
+        }
+      },
+      "required": [
+        "provider",
+        "sourceUri",
+        "licenceUri",
+        "dataTermsUri",
+        "retrievalCaveat",
+        "nonAffiliationStatement"
+      ],
+      "type": "object"
+    },
+    "SourceFact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/StableIdentifier"
+        },
+        "type": {
+          "$ref": "#/$defs/FactType"
+        },
+        "origin": {
+          "const": "source"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": ["id", "type", "origin", "value", "evidence"],
+      "type": "object"
+    },
+    "StableIdentifier": {
+      "description": "Stable lowercase identifier.",
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$",
+      "type": "string"
+    }
+  }
+}

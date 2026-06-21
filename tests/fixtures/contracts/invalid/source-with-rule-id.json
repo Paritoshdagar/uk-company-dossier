@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "company": {
+    "companyNumber": "00000006"
+  },
+  "generatedAt": "2026-06-21T10:30:00Z",
+  "sections": {
+    "company_profile": {
+      "status": "complete",
+      "facts": [
+        {
+          "id": "company-profile.number",
+          "type": "company.number",
+          "origin": "source",
+          "ruleId": "rule.not-allowed.v1",
+          "value": "00000006",
+          "evidence": [
+            {
+              "sourceUri": "https://api.company-information.service.gov.uk/company/00000006",
+              "retrievedAt": "2026-06-21T10:29:00Z",
+              "payloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "errors": []
+    }
+  },
+  "sourceAttribution": {
+    "provider": "Companies House",
+    "sourceUri": "https://api.company-information.service.gov.uk/",
+    "licenceUri": "https://developer.company-information.service.gov.uk/developer-guidelines",
+    "dataTermsUri": "https://developer.company-information.service.gov.uk/api/docs/",
+    "retrievalCaveat": "Companies House data is retrieved at the generatedAt timestamp and may change after retrieval.",
+    "nonAffiliationStatement": "This dossier is not affiliated with Companies House."
+  }
+}

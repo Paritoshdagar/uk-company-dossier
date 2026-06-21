@@ -15,6 +15,7 @@ export default tseslint.config(
         projectService: {
           allowDefaultProject: [
             "tests/cli/*.ts",
+            "tests/contracts/*.ts",
             "tests/scripts/*.ts",
             "vitest.config.ts",
           ],
