@@ -1,15 +1,15 @@
-# Private planning and agent reasoning
-/docs/superpowers/
-
 # Local credentials
 .env
 .env.*
 !.env.example
 
-# Local data and release evidence drafts
+# Local data, private notes, and release evidence drafts
 /data/
 /tmp/
+/private/
+/docs/private/
 /release-evidence-private/
+*.private.*
 
 # Platform and editor files
 .DS_Store

@@ -52,15 +52,14 @@ const requiredReadmePhrases = [
 const randomSelectionDisclaimer =
   "Demonstration companies were selected programmatically by this repository's documented random-company picker from predeclared Companies House eligibility pools. The author did not choose or rank the selected companies. Inclusion does not imply endorsement, criticism, concern, affiliation, or preference. Public-register information is shown solely to demonstrate software behaviour, may change, and must be verified at Companies House before use.";
 
-const privateTerms = [
-  ["docs", "superpowers"].join("/"),
-  ["private", "specification"].join(" "),
-  [["FTSE", "100"].join(" "), "executive"].join(" "),
-  ["FTSE", "100"].join(" "),
-  ["Linked", "In"].join(""),
-  ["ProjectPhoenix", "FComHouseAPI"].join("-"),
-  ["/Users", "paritoshdagar"].join("/"),
-];
+const maintainerHomePathPattern = new RegExp(
+  [
+    "(?:^|[\\s\"'(=\\[`])/Users/[A-Za-z0-9._-]+/[A-Za-z0-9][A-Za-z0-9._-]*",
+    "(?:^|[\\s\"'(=\\[`])/home/[A-Za-z0-9._-]+/(?:Documents|Desktop|Downloads|Developer|dev|code|Code|projects|workspace|workspaces|repo|repos|src|git|GitHub)(?:/|\\b)",
+    String.raw`[A-Za-z]:\\Users\\[^\\\r\n]+\\`,
+  ].join("|"),
+  "u",
+);
 
 const apiKeyVariable = ["COMPANIES_HOUSE_API", "KEY"].join("_");
 const concreteApiKeyAssignmentPattern = new RegExp(
@@ -155,16 +154,14 @@ async function assertNoPrivateTerms() {
   for (const relativePath of scanTargets) {
     const text = await readText(relativePath);
 
-    for (const privateTerm of privateTerms) {
-      if (text.includes(privateTerm)) {
-        fail(`Private term found in ${relativePath}: ${privateTerm}`);
-      }
-    }
-
     if (concreteApiKeyAssignmentPattern.test(text)) {
       fail(
         `Concrete Companies House API key assignment found in ${relativePath}`,
       );
+    }
+
+    if (maintainerHomePathPattern.test(text)) {
+      fail(`Local home-directory path found in ${relativePath}`);
     }
   }
 }

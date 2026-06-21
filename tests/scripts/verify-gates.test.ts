@@ -8,6 +8,45 @@ import { describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
+const exampleHomePath = [
+  "",
+  ["Us", "ers"].join(""),
+  "example",
+  "Documents",
+  "private-note.md",
+].join("/");
+const exampleWindowsHomePath = [
+  "C:",
+  ["Us", "ers"].join(""),
+  "example",
+  "Documents",
+  "private-note.md",
+].join("\\");
+const exampleLinuxHomePath = [
+  "",
+  "home",
+  "example",
+  "Documents",
+  "private-note.md",
+].join("/");
+const homePathLeakCases = [
+  {
+    name: "assignment Unix home path",
+    text: `path=${exampleHomePath}`,
+  },
+  {
+    name: "inline-code Unix home path",
+    text: `See \`${exampleHomePath}\` for local output.`,
+  },
+  {
+    name: "Windows home path",
+    text: `Windows path: ${exampleWindowsHomePath}`,
+  },
+  {
+    name: "Linux home path with common local directory",
+    text: `Linux path: ${exampleLinuxHomePath}`,
+  },
+] as const;
 const skipHeavyEnvironment = {
   ...process.env,
   UK_COMPANY_DOSSIER_SKIP_HEAVY_GATES_FOR_TESTS: "1",
@@ -162,13 +201,15 @@ describe("cross-platform release verification gates", () => {
     const directory = await createFixtureRepository();
 
     try {
-      await writeFile(join(directory, "docs-superpowers-placeholder"), "");
-      await mkdir(join(directory, "docs/superpowers"), { recursive: true });
+      await writeFile(join(directory, "private-planning-placeholder"), "");
+      await mkdir(join(directory, "docs/private"), {
+        recursive: true,
+      });
       await writeFile(
-        join(directory, "docs/superpowers/private.md"),
+        join(directory, "docs/private/private.md"),
         "private planning\n",
       );
-      await execFileAsync("git", ["add", "docs/superpowers/private.md"], {
+      await execFileAsync("git", ["add", "docs/private/private.md"], {
         cwd: directory,
       });
 
@@ -180,6 +221,60 @@ describe("cross-platform release verification gates", () => {
 
       expect(result.code).toBe(1);
       expect(result.stderr).toContain("Forbidden tracked path");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  for (const leakCase of homePathLeakCases) {
+    it(`rejects ${leakCase.name} references in public files`, async () => {
+      const directory = await createFixtureRepository();
+
+      try {
+        await mkdir(join(directory, "scripts"), { recursive: true });
+        await writeFile(join(directory, "scripts/leaky.md"), leakCase.text);
+        await execFileAsync("git", ["add", "scripts/leaky.md"], {
+          cwd: directory,
+        });
+
+        const result = await runCommand(
+          process.execPath,
+          [join(repositoryRoot, "scripts/verify-commit.mjs")],
+          directory,
+        );
+
+        expect(result.code).toBe(1);
+        expect(result.stderr).toContain("Local home-directory path found");
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+
+  it("allows ordinary home route examples that are not local paths", async () => {
+    const directory = await createFixtureRepository();
+
+    try {
+      await mkdir(join(directory, "scripts"), { recursive: true });
+      await writeFile(
+        join(directory, "scripts/routes.md"),
+        [
+          "Open https://example.com/home/products/ in a browser.",
+          "The website route is /home/company/.",
+          "The deeper website route is /home/company/profile.",
+        ].join("\n"),
+      );
+      await execFileAsync("git", ["add", "scripts/routes.md"], {
+        cwd: directory,
+      });
+
+      const result = await runCommand(
+        process.execPath,
+        [join(repositoryRoot, "scripts/verify-commit.mjs")],
+        directory,
+      );
+
+      expect(result.code).toBe(0);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

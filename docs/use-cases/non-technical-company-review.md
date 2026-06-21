@@ -9,7 +9,7 @@ Create a dossier, read the warnings, and use evidence links to verify important 
 ## Before you start
 
 1. Install the project.
-2. Copy `.env.example` to `.env`.
+2. Run `npm run env:init` to create `.env` from `.env.example`.
 3. Create your own Companies House API key using the README instructions.
 4. Run:
 

@@ -84,15 +84,14 @@ For docs-only changes, add deterministic docs checks where practical.
 
 ## Code discovery
 
-Prefer codebase-memory-mcp graph tools before text search:
+Use whatever code-navigation tools are available in your environment. This repository does not require any private indexing service or machine-specific agent tooling.
 
-1. `search_graph` for functions, classes, routes, variables, and symbols.
-2. `trace_path` for callers/callees.
-3. `get_code_snippet` for exact source.
-4. `query_graph` for complex patterns.
-5. `get_architecture` for high-level structure.
+When in doubt, prefer repository-native commands that work anywhere:
 
-Fallback to `rg` for string literals, docs, config, shell scripts, or when graph tools are unavailable.
+```bash
+rg "search term"
+rg --files
+```
 
 ## Schema-change process
 
@@ -147,7 +146,7 @@ npm run verify:release
 git diff --check
 ```
 
-Before any push, refresh or verify the codebase-memory graph for the exact worktree and run a secret scan if tooling is available.
+Before any push, run the release verification gate and a secret scan if tooling is available.
 
 Do not change repository visibility. A human owner decides when a private repo becomes public.
 

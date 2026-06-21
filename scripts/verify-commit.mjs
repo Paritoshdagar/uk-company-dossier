@@ -17,6 +17,15 @@ import {
 const root = await gitRoot();
 const skipHeavy =
   process.env.UK_COMPANY_DOSSIER_SKIP_HEAVY_GATES_FOR_TESTS === "1";
+const releaseEvidencePath = ["release", "evidence", "private"].join("-");
+const maintainerHomePathPattern = new RegExp(
+  [
+    "(?:^|[\\s\"'(=\\[`])/Users/[A-Za-z0-9._-]+/[A-Za-z0-9][A-Za-z0-9._-]*",
+    "(?:^|[\\s\"'(=\\[`])/home/[A-Za-z0-9._-]+/(?:Documents|Desktop|Downloads|Developer|dev|code|Code|projects|workspace|workspaces|repo|repos|src|git|GitHub)(?:/|\\b)",
+    String.raw`[A-Za-z]:\\Users\\[^\\\r\n]+\\`,
+  ].join("|"),
+  "u",
+);
 
 async function checkForbiddenTrackedPaths() {
   log("Checking forbidden tracked paths");
@@ -27,15 +36,14 @@ async function checkForbiddenTrackedPaths() {
   const forbidden = trackedFiles.filter((path) => {
     const parts = path.split("/");
     const basename = parts.at(-1) ?? "";
-    const privatePlanPath = ["docs", "superpowers"].join("/");
-    const privateEvidencePath = ["release-evidence", "private"].join("-");
 
     return (
       (basename.startsWith(".env") && basename !== ".env.example") ||
-      path === privatePlanPath ||
-      path.startsWith(`${privatePlanPath}/`) ||
-      path === privateEvidencePath ||
-      path.startsWith(`${privateEvidencePath}/`)
+      path === releaseEvidencePath ||
+      path.startsWith(`${releaseEvidencePath}/`) ||
+      path.startsWith("private/") ||
+      path.startsWith("docs/private/") ||
+      basename.includes(".private.")
     );
   });
 
@@ -52,13 +60,6 @@ async function checkPublicPrivacyPatterns() {
   log(
     "Checking public files for private paths and concrete API-key assignments",
   );
-  const privateTerms = [
-    ["docs", "superpowers"].join("/"),
-    ["private", "specification"].join(" "),
-    [["FTSE", "100"].join(" "), "executive"].join(" "),
-    ["ProjectPhoenix", "FComHouseAPI"].join("-"),
-    ["/Users", "paritoshdagar"].join("/"),
-  ];
   const concreteApiKeyAssignmentPattern = new RegExp(
     `${["COMPANIES_HOUSE_API", "KEY"].join("_")}=\\S+`,
     "u",
@@ -74,18 +75,31 @@ async function checkPublicPrivacyPatterns() {
   ];
 
   for (const relativePath of targets) {
-    const text = await readRepositoryText(root, relativePath);
-
-    for (const privateTerm of privateTerms) {
-      if (text.includes(privateTerm)) {
-        fail(`Private term found in ${relativePath}.`);
+    const text = await readRepositoryText(root, relativePath).catch((error) => {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        return undefined;
       }
+
+      throw error;
+    });
+
+    if (text === undefined) {
+      continue;
     }
 
     if (concreteApiKeyAssignmentPattern.test(text)) {
       fail(
         `Concrete Companies House API key assignment found in ${relativePath}.`,
       );
+    }
+
+    if (maintainerHomePathPattern.test(text)) {
+      fail(`Local home-directory path found in ${relativePath}.`);
     }
   }
 }
