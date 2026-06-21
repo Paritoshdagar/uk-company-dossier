@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "ceased_on": "2025-01-31",
+      "kind": "individual-person-with-significant-control",
+      "links": {
+        "self": "/company/SC123456/persons-with-significant-control/individual/psc-002"
+      },
+      "name": "SECOND SYNTHETIC",
+      "natures_of_control": [
+        "ownership-of-shares-75-to-100-percent",
+        "voting-rights-75-to-100-percent"
+      ],
+      "notified_on": "2021-02-03"
+    },
+    {
+      "kind": "individual-person-with-significant-control",
+      "links": {
+        "self": "/company/SC123456/persons-with-significant-control/individual/psc-001"
+      },
+      "name": "FIRST SYNTHETIC",
+      "natures_of_control": [
+        "right-to-appoint-and-remove-directors",
+        "ownership-of-shares-25-to-50-percent"
+      ],
+      "notified_on": "2020-05-06"
+    }
+  ],
+  "items_per_page": 25,
+  "start_index": 0,
+  "total_results": 2
+}

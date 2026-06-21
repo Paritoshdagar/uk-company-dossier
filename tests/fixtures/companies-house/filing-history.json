@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "category": "accounts",
+      "date": "2024-10-01",
+      "description": "accounts-with-accounts-type-total-exemption-full",
+      "links": {
+        "document_metadata": "https://document-api.company-information.service.gov.uk/document/doc-accounts-002",
+        "self": "/company/SC123456/filing-history/MzAwMDAwMDAy"
+      },
+      "paper_filed": false,
+      "transaction_id": "MzAwMDAwMDAy",
+      "type": "AA"
+    },
+    {
+      "category": "confirmation-statement",
+      "date": "2024-05-01",
+      "description": "confirmation-statement-with-updates",
+      "links": {
+        "document_metadata": "https://document-api.company-information.service.gov.uk/document/doc-cs-001",
+        "self": "/company/SC123456/filing-history/MzAwMDAwMDAx"
+      },
+      "paper_filed": false,
+      "transaction_id": "MzAwMDAwMDAx",
+      "type": "CS01"
+    }
+  ],
+  "items_per_page": 25,
+  "start_index": 0,
+  "total_results": 2
+}

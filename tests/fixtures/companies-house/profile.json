@@ -1,0 +1,19 @@
+{
+  "company_name": "ALPHA-BETA HOLDINGS LIMITED",
+  "company_number": "SC123456",
+  "company_status": "active",
+  "date_of_creation": "2020-01-02",
+  "jurisdiction": "scotland",
+  "registered_office_address": {
+    "address_line_1": "Example Street",
+    "country": "Scotland",
+    "locality": "Edinburgh",
+    "postal_code": "EH1 1AA",
+    "premises": "1"
+  },
+  "sic_codes": ["62020", "62012"],
+  "type": "ltd",
+  "undocumented_nested_field": {
+    "kept_only_in_raw_fixture": true
+  }
+}

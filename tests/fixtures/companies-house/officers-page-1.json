@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "appointed_on": "2021-01-01",
+      "appointment_id": "appt-002",
+      "country_of_residence": "United Kingdom",
+      "links": {
+        "self": "/company/SC123456/appointments/appt-002"
+      },
+      "name": "JOHN SYNTHETIC",
+      "officer_role": "director"
+    },
+    {
+      "appointed_on": "2020-06-01",
+      "appointment_id": "appt-001",
+      "links": {
+        "self": "/company/SC123456/appointments/appt-001"
+      },
+      "name": "JANE SYNTHETIC",
+      "officer_role": "secretary"
+    }
+  ],
+  "items_per_page": 2,
+  "start_index": 0,
+  "total_results": 4
+}

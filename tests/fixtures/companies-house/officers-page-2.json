@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "appointed_on": "2022-03-04",
+      "appointment_id": "appt-003",
+      "links": {
+        "self": "/company/SC123456/appointments/appt-003"
+      },
+      "name": "SAM SYNTHETIC",
+      "officer_role": "director"
+    },
+    {
+      "appointed_on": "2021-01-01",
+      "appointment_id": "appt-002",
+      "links": {
+        "self": "/company/SC123456/appointments/appt-002"
+      },
+      "name": "JOHN SYNTHETIC",
+      "officer_role": "director"
+    }
+  ],
+  "items_per_page": 2,
+  "start_index": 2,
+  "total_results": 4
+}

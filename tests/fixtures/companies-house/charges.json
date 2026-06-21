@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "charge_code": "SC1234560002",
+      "classification": {
+        "description": "A registered charge",
+        "type": "charge-description"
+      },
+      "created_on": "2024-01-02",
+      "delivered_on": "2024-01-05",
+      "persons_entitled": [
+        {
+          "name": "SYNTHETIC BANK PLC"
+        }
+      ],
+      "status": "outstanding"
+    },
+    {
+      "charge_code": "SC1234560001",
+      "classification": {
+        "description": "A charge registered before 6 April 2013",
+        "type": "charge-description"
+      },
+      "created_on": "2020-03-04",
+      "delivered_on": "2020-03-06",
+      "persons_entitled": [
+        {
+          "name": "EXAMPLE LENDER LIMITED"
+        }
+      ],
+      "status": "fully-satisfied"
+    }
+  ],
+  "items_per_page": 25,
+  "start_index": 0,
+  "total_results": 2
+}
