@@ -21,6 +21,8 @@ describe("built CLI module import", () => {
     const guardDirectory = join(tmpdir(), "dossier-fs-guard");
     const guardPath = join(guardDirectory, "guard-fs.mjs");
     const runnerPath = join(guardDirectory, "run-help.mjs");
+    const guardUrl = pathToFileURL(guardPath).href;
+    const runnerUrl = pathToFileURL(runnerPath).href;
     const builtModuleUrl = pathToFileURL(
       join(repositoryRoot, "dist", "cli", "main.js"),
     ).href;
@@ -59,7 +61,7 @@ describe("built CLI module import", () => {
 
     const { stdout, stderr } = await execFileAsync(
       process.execPath,
-      ["--import", guardPath, runnerPath],
+      ["--import", guardUrl, "--eval", `import(${JSON.stringify(runnerUrl)});`],
       {
         cwd: repositoryRoot,
       },
