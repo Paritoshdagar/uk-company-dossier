@@ -7,6 +7,8 @@ const normalizedTypePattern = /^[a-z][a-z0-9._:-]*$/;
 const sectionKeyPattern = /^[a-z][a-z0-9_:-]*$/;
 const companyNumberPattern = /^[0-9A-Z]{8}$/;
 const lowercaseSha256Pattern = /^[0-9a-f]{64}$/;
+const strictUriCharacterPattern = /^[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*$/u;
+const invalidPercentEncodingPattern = /%(?![0-9A-Fa-f]{2})/u;
 const officialCompaniesHouseUriPattern =
   /^https:\/\/(?:(?:api|developer|find-and-update)\.company-information\.service\.gov\.uk|www\.gov\.uk)(?:[/?#]|$)/;
 
@@ -18,8 +20,16 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-function isHttpsUri(value: string): boolean {
+function isStrictHttpsUri(value: string): boolean {
   if (!value.startsWith("https://")) {
+    return false;
+  }
+
+  if (!strictUriCharacterPattern.test(value)) {
+    return false;
+  }
+
+  if (invalidPercentEncodingPattern.test(value)) {
     return false;
   }
 
@@ -31,15 +41,15 @@ function isHttpsUri(value: string): boolean {
 }
 
 function isOfficialCompaniesHouseUri(value: string): boolean {
+  if (!isStrictHttpsUri(value)) {
+    return false;
+  }
+
   if (!officialCompaniesHouseUriPattern.test(value)) {
     return false;
   }
 
-  try {
-    return new URL(value).protocol === "https:";
-  } catch {
-    return false;
-  }
+  return true;
 }
 
 const nonBlankStringSchema = z
@@ -59,7 +69,7 @@ const normalizedFactTypeSchema = z.string().regex(normalizedTypePattern, {
     "Expected a normalized lowercase fact type using letters, digits, dot, underscore, colon, or hyphen.",
 });
 
-const httpsUriSchema = z.string().refine(isHttpsUri, {
+const httpsUriSchema = z.string().refine(isStrictHttpsUri, {
   message: "Expected an HTTPS URI.",
 });
 

@@ -124,6 +124,31 @@ const validSourceFact = {
   evidence: [validEvidenceRef],
 };
 
+function setFirstEvidenceSourceUri(
+  dossier: CompanyDossier,
+  sourceUri: string,
+): void {
+  const section = dossier.sections.company_profile;
+
+  if (section === undefined) {
+    throw new Error("Expected company_profile section in fixture.");
+  }
+
+  const fact = section.facts[0];
+
+  if (fact === undefined) {
+    throw new Error("Expected first fact in company_profile fixture.");
+  }
+
+  const evidence = fact.evidence[0];
+
+  if (evidence === undefined) {
+    throw new Error("Expected first evidence ref in company_profile fixture.");
+  }
+
+  evidence.sourceUri = sourceUri;
+}
+
 describe("company evidence contract fixtures", () => {
   it("self-validates the public JSON Schema document", async () => {
     const ajv = createAjv();
@@ -187,6 +212,16 @@ describe("company evidence Zod contract", () => {
       {
         ...validEvidenceRef,
         sourceUri: "HTTPS://api.company-information.service.gov.uk/company/1",
+      },
+      {
+        ...validEvidenceRef,
+        sourceUri:
+          "https://api.company-information.service.gov.uk/company/has space",
+      },
+      {
+        ...validEvidenceRef,
+        sourceUri:
+          "https://api.company-information.service.gov.uk/company/currency/£",
       },
       { ...validEvidenceRef, retrievedAt: "2026-06-21 10:29:00" },
       { ...validEvidenceRef, payloadSha256: "A".repeat(64) },
@@ -325,6 +360,75 @@ describe("company evidence Zod contract", () => {
       validator(officialQueryAtHost),
       JSON.stringify(validator.errors),
     ).toBe(true);
+  });
+
+  it("matches JSON Schema URI parity for raw and percent-encoded URI characters", async () => {
+    const validator = await loadDossierJsonValidator();
+    const fixture = companyDossierSchema.parse(
+      await loadJsonFile(
+        join(validFixturesRoot, "complete-source-dossier.json"),
+      ),
+    );
+    const rawUriCases = [
+      {
+        description: "evidence URI with raw space",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://api.company-information.service.gov.uk/company/has space",
+          );
+        },
+      },
+      {
+        description: "evidence URI with unescaped Unicode path",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://api.company-information.service.gov.uk/company/currency/£",
+          );
+        },
+      },
+      {
+        description: "official URI with raw space",
+        mutate: (dossier: CompanyDossier) => {
+          dossier.sourceAttribution.sourceUri =
+            "https://api.company-information.service.gov.uk/has space";
+        },
+      },
+      {
+        description: "official URI with unescaped Unicode path",
+        mutate: (dossier: CompanyDossier) => {
+          dossier.sourceAttribution.sourceUri =
+            "https://api.company-information.service.gov.uk/currency/£";
+        },
+      },
+    ];
+
+    for (const { description, mutate } of rawUriCases) {
+      const dossier = cloneJson(fixture);
+
+      mutate(dossier);
+
+      expect(
+        companyDossierSchema.safeParse(dossier).success,
+        `${description} should fail Zod`,
+      ).toBe(false);
+      expect(validator(dossier), `${description} should fail Ajv`).toBe(false);
+    }
+
+    const encodedDossier = cloneJson(fixture);
+
+    setFirstEvidenceSourceUri(
+      encodedDossier,
+      "https://api.company-information.service.gov.uk/company/has%20space?currency=%C2%A3#evidence",
+    );
+    encodedDossier.sourceAttribution.sourceUri =
+      "https://api.company-information.service.gov.uk?company=00000006&currency=%C2%A3#source";
+
+    expect(companyDossierSchema.safeParse(encodedDossier).success).toBe(true);
+    expect(validator(encodedDossier), JSON.stringify(validator.errors)).toBe(
+      true,
+    );
   });
 });
 
