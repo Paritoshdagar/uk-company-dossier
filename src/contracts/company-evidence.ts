@@ -9,12 +9,11 @@ const companyNumberPattern = /^[0-9A-Z]{8}$/;
 const lowercaseSha256Pattern = /^[0-9a-f]{64}$/;
 const strictUriCharacterPattern = /^[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*$/u;
 const invalidPercentEncodingPattern = /%(?![0-9A-Fa-f]{2})/u;
+const percentEncodedOctetPattern = /%[0-9A-Fa-f]{2}/u;
 const officialCompaniesHouseUriPattern =
   /^https:\/\/(?:(?:api|developer|find-and-update)\.company-information\.service\.gov\.uk|www\.gov\.uk)(?:[/?#]|$)/;
 const sensitiveCredentialQueryParameterPattern =
   /^(?:api[-_]?key|apikey|x-api-key|api[-_]?token|apitoken|access[-_]?token|accesstoken|refresh[-_]?token|refreshtoken|id[-_]?token|idtoken|token|secret|password|credential|client_secret|clientsecret|private_key|privatekey|authorization)$/iu;
-
-export const MAX_JSON_VALUE_DEPTH = 64;
 
 export type JsonValue =
   | null
@@ -24,6 +23,11 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
+interface JsonTraversalFrame {
+  readonly exiting?: boolean;
+  readonly value: unknown;
+}
+
 function hasCredentialBearingUriParts(url: URL): boolean {
   if (url.username.length > 0 || url.password.length > 0) {
     return true;
@@ -31,6 +35,30 @@ function hasCredentialBearingUriParts(url: URL): boolean {
 
   for (const queryKey of url.searchParams.keys()) {
     if (sensitiveCredentialQueryParameterPattern.test(queryKey)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasPercentEncodedQueryParameterName(value: string): boolean {
+  const queryStart = value.indexOf("?");
+
+  if (queryStart === -1) {
+    return false;
+  }
+
+  const fragmentStart = value.indexOf("#", queryStart + 1);
+  const rawQuery = value.slice(
+    queryStart + 1,
+    fragmentStart === -1 ? undefined : fragmentStart,
+  );
+
+  for (const rawParameter of rawQuery.split("&")) {
+    const rawName = rawParameter.split("=", 1)[0] ?? "";
+
+    if (percentEncodedOctetPattern.test(rawName)) {
       return true;
     }
   }
@@ -48,6 +76,10 @@ function isStrictHttpsUri(value: string): boolean {
   }
 
   if (invalidPercentEncodingPattern.test(value)) {
+    return false;
+  }
+
+  if (hasPercentEncodedQueryParameterName(value)) {
     return false;
   }
 
@@ -137,74 +169,91 @@ function isPlainJsonObject(value: object): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-function isJsonCompatibleValue(
-  value: unknown,
-  depth = 0,
-  ancestors?: WeakSet<object>,
-): value is JsonValue {
-  const activeAncestors = ancestors ?? new WeakSet();
+function isJsonScalar(value: unknown): value is null | boolean | string {
+  return (
+    value === null || typeof value === "boolean" || typeof value === "string"
+  );
+}
 
-  if (depth > MAX_JSON_VALUE_DEPTH) {
-    return false;
+function isJsonCompatibleValue(value: unknown): value is JsonValue {
+  const activeAncestors = new WeakSet();
+  const stack: JsonTraversalFrame[] = [{ value }];
+
+  while (stack.length > 0) {
+    const frame = stack.pop();
+
+    if (frame === undefined) {
+      continue;
+    }
+
+    const currentValue = frame.value;
+
+    if (frame.exiting === true) {
+      if (typeof currentValue === "object" && currentValue !== null) {
+        activeAncestors.delete(currentValue);
+      }
+
+      continue;
+    }
+
+    if (isJsonScalar(currentValue)) {
+      continue;
+    }
+
+    if (typeof currentValue === "number") {
+      if (!Number.isFinite(currentValue)) {
+        return false;
+      }
+
+      continue;
+    }
+
+    if (typeof currentValue !== "object") {
+      return false;
+    }
+
+    if (activeAncestors.has(currentValue)) {
+      return false;
+    }
+
+    if (Array.isArray(currentValue)) {
+      activeAncestors.add(currentValue);
+      stack.push({ exiting: true, value: currentValue });
+
+      for (let index = currentValue.length - 1; index >= 0; index -= 1) {
+        stack.push({ value: currentValue[index] });
+      }
+
+      continue;
+    }
+
+    if (!isPlainJsonObject(currentValue)) {
+      return false;
+    }
+
+    if (Object.getOwnPropertySymbols(currentValue).length > 0) {
+      return false;
+    }
+
+    try {
+      activeAncestors.add(currentValue);
+      stack.push({ exiting: true, value: currentValue });
+
+      for (const item of Object.values(currentValue).reverse()) {
+        stack.push({ value: item });
+      }
+    } catch {
+      return false;
+    }
   }
 
-  if (
-    value === null ||
-    typeof value === "boolean" ||
-    typeof value === "string"
-  ) {
-    return true;
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value);
-  }
-
-  if (typeof value !== "object") {
-    return false;
-  }
-
-  if (activeAncestors.has(value)) {
-    return false;
-  }
-
-  activeAncestors.add(value);
-
-  if (Array.isArray(value)) {
-    const isValidArray = value.every((item) =>
-      isJsonCompatibleValue(item, depth + 1, activeAncestors),
-    );
-
-    activeAncestors.delete(value);
-
-    return isValidArray;
-  }
-
-  if (!isPlainJsonObject(value)) {
-    activeAncestors.delete(value);
-
-    return false;
-  }
-
-  try {
-    const isValidObject = Object.values(value).every((item) =>
-      isJsonCompatibleValue(item, depth + 1, activeAncestors),
-    );
-
-    activeAncestors.delete(value);
-
-    return isValidObject;
-  } catch {
-    activeAncestors.delete(value);
-
-    return false;
-  }
+  return true;
 }
 
 export const jsonValueSchema: z.ZodType<JsonValue> = z
   .unknown()
   .refine((value): value is JsonValue => isJsonCompatibleValue(value), {
-    message: "Expected JSON-compatible value with maximum depth 64.",
+    message: "Expected JSON-compatible value.",
   });
 
 export function createFactSchema<TValueSchema extends z.ZodType<JsonValue>>(

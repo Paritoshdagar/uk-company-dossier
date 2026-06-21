@@ -18,6 +18,7 @@ import {
   sourceAttributionSchema,
   type CompanyDossier,
   type EvidenceStatus,
+  type JsonValue,
 } from "../../src/contracts/company-evidence.js";
 import {
   CompaniesHouseHttpError,
@@ -110,8 +111,8 @@ function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-function nestedArray(depth: number): unknown {
-  let value: unknown = "leaf";
+function nestedArray(depth: number): JsonValue {
+  let value: JsonValue = "leaf";
 
   for (let index = 0; index < depth; index += 1) {
     value = [value];
@@ -297,6 +298,7 @@ describe("company evidence Zod contract", () => {
       { nested: { array: [1, "two", null] } },
       JSON.parse('{"parsed":["json",1,true,null]}') as unknown,
       nestedArray(8),
+      nestedArray(65),
     ];
 
     for (const value of validValues) {
@@ -318,7 +320,6 @@ describe("company evidence Zod contract", () => {
       new Date("2026-06-21T10:30:00Z"),
       new Map([["key", "value"]]),
       cyclicObject,
-      nestedArray(65),
     ]) {
       expect(
         jsonValueSchema.safeParse(invalid).success,
@@ -377,6 +378,25 @@ describe("company evidence Zod contract", () => {
     ]) {
       expect(evidenceSectionSchema.safeParse(invalid).success).toBe(false);
     }
+  });
+
+  it("matches JSON Schema value parity for deeply nested serializable JSON", async () => {
+    const validator = await loadDossierJsonValidator();
+    const dossier = companyDossierSchema.parse(
+      await loadJsonFile(
+        join(validFixturesRoot, "complete-source-dossier.json"),
+      ),
+    );
+    const section = dossier.sections.company_profile;
+
+    if (section?.facts[0] === undefined) {
+      throw new Error("Expected company_profile fact in fixture.");
+    }
+
+    section.facts[0].value = nestedArray(65);
+
+    expect(companyDossierSchema.safeParse(dossier).success).toBe(true);
+    expect(validator(dossier), JSON.stringify(validator.errors)).toBe(true);
   });
 
   it("matches JSON Schema URI parity for official host query and lowercase scheme rules", async () => {
@@ -464,7 +484,7 @@ describe("company evidence Zod contract", () => {
 
     setFirstEvidenceSourceUri(
       encodedDossier,
-      "https://vendor.example/company/has%20space?document=00000006&currency=%C2%A3#evidence",
+      "https://vendor.example/company/has%20space?document=has%20space&currency=%C2%A3#evidence",
     );
     encodedDossier.sourceAttribution.sourceUri =
       "https://api.company-information.service.gov.uk?company=00000006&currency=%C2%A3#source";
@@ -502,6 +522,24 @@ describe("company evidence Zod contract", () => {
         },
       },
       {
+        description: "evidence URI with encoded access token query key",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://vendor.example/source.json?access%5Ftoken=value",
+          );
+        },
+      },
+      {
+        description: "evidence URI with benign encoded query key",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://vendor.example/source.json?safe%5Fkey=value",
+          );
+        },
+      },
+      {
         description: "official URI with access token query parameter",
         mutate: (dossier: CompanyDossier) => {
           dossier.sourceAttribution.sourceUri =
@@ -513,6 +551,13 @@ describe("company evidence Zod contract", () => {
         mutate: (dossier: CompanyDossier) => {
           dossier.sourceAttribution.licenceUri =
             "https://developer.company-information.service.gov.uk/developer-guidelines?client_secret=value";
+        },
+      },
+      {
+        description: "official URI with encoded client secret query key",
+        mutate: (dossier: CompanyDossier) => {
+          dossier.sourceAttribution.licenceUri =
+            "https://developer.company-information.service.gov.uk/developer-guidelines?client%5Fsecret=value";
         },
       },
     ];
