@@ -1,6 +1,6 @@
 # Third-party notices
 
-At the current two-file code stage, this repository has no runtime dependencies. This file will be regenerated and verified from lockfiles before release.
+No runtime dependencies are declared in a lockfile at this revision. This file will be regenerated and verified whenever a lockfile changes and before release.
 
 ## Legal material
 

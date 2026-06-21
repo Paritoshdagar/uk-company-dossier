@@ -1,0 +1,40 @@
+name: Commercial licensing inquiry
+description: Make an initial, public, non-confidential inquiry about commercial licensing
+title: "[Commercial licensing]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Opening or submitting it does not grant permission or commercial-use rights.
+
+        Do not include confidential information, client information, credentials, private-company information, or sensitive personal information.
+  - type: input
+    id: organisation
+    attributes:
+      label: High-level organisation
+      description: This answer is publicly visible. Give only a high-level organisation name or description.
+      placeholder: Organisation name or general description
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: High-level use case
+      description: This answer is publicly visible. Describe the intended commercial use at a high level only.
+      placeholder: Non-confidential summary of the intended use
+    validations:
+      required: true
+  - type: checkboxes
+    id: public_information
+    attributes:
+      label: Public and non-confidential submission
+      options:
+        - label: I understand this issue is public and will not include confidential, client, credential, private-company, or sensitive-personal information.
+          required: true
+  - type: checkboxes
+    id: permission
+    attributes:
+      label: Commercial permission
+      options:
+        - label: I understand that opening or submitting this issue does not grant permission or commercial-use rights, and that I have no commercial-use rights unless and until a separate written licence is signed.
+          required: true
