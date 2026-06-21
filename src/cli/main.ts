@@ -220,7 +220,15 @@ const companyNumberPattern = /^[0-9A-Z]{8}$/u;
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/u;
 const documentIdPattern = /^[A-Za-z0-9_-]+$/u;
 
-function parseCompanyNumberInput(companyNumber: string): string {
+function parseCompanyNumberInput(companyNumber: string | undefined): string {
+  if (companyNumber === undefined || companyNumber.trim().length === 0) {
+    throw new CliCommandError(
+      "invalid_input",
+      "Company number is required.",
+      2,
+    );
+  }
+
   const normalized = companyNumber.trim().toUpperCase();
 
   if (!companyNumberPattern.test(normalized)) {
@@ -246,7 +254,11 @@ function parseRequiredPath(value: string | undefined, label: string): string {
   return value;
 }
 
-function parseDocumentId(documentId: string): string {
+function parseDocumentId(documentId: string | undefined): string {
+  if (documentId === undefined || documentId.trim().length === 0) {
+    throw new CliCommandError("invalid_input", "Document ID is required.", 2);
+  }
+
   const trimmed = documentId.trim();
 
   if (!documentIdPattern.test(trimmed)) {
@@ -512,11 +524,14 @@ function filterFilings(
   });
 }
 
-function snapshotLocation(input: string): {
+function snapshotLocation(
+  input: string | undefined,
+  label: string,
+): {
   readonly fileName: string;
   readonly snapshotDir: string;
 } {
-  const absolutePath = resolve(input);
+  const absolutePath = resolve(parseRequiredPath(input, label));
 
   return {
     fileName: basename(absolutePath),
@@ -526,7 +541,7 @@ function snapshotLocation(input: string): {
 
 async function runDossierCommand(
   runtime: RuntimeDependencies,
-  companyNumberInput: string,
+  companyNumberInput: string | undefined,
   options: DossierCommandOptions,
 ): Promise<void> {
   const companyNumber = parseCompanyNumberInput(companyNumberInput);
@@ -557,7 +572,7 @@ async function runDossierCommand(
 
 async function runFilingsCommand(
   runtime: RuntimeDependencies,
-  companyNumberInput: string,
+  companyNumberInput: string | undefined,
   options: FilingsCommandOptions,
 ): Promise<void> {
   const companyNumber = parseCompanyNumberInput(companyNumberInput);
@@ -580,7 +595,7 @@ async function runFilingsCommand(
 
 async function runDocumentCommand(
   runtime: RuntimeDependencies,
-  documentIdInput: string,
+  documentIdInput: string | undefined,
   options: DocumentCommandOptions,
 ): Promise<void> {
   const documentId = parseDocumentId(documentIdInput);
@@ -627,7 +642,7 @@ async function runDocumentCommand(
 
 async function runSnapshotSaveCommand(
   runtime: RuntimeDependencies,
-  companyNumberInput: string,
+  companyNumberInput: string | undefined,
   options: SnapshotDirectoryOptions,
 ): Promise<void> {
   const companyNumber = parseCompanyNumberInput(companyNumberInput);
@@ -650,7 +665,7 @@ async function runSnapshotSaveCommand(
 
 async function runSnapshotListCommand(
   runtime: RuntimeDependencies,
-  companyNumberInput: string,
+  companyNumberInput: string | undefined,
   options: SnapshotDirectoryOptions,
 ): Promise<void> {
   const companyNumber = parseCompanyNumberInput(companyNumberInput);
@@ -668,11 +683,11 @@ async function runSnapshotListCommand(
 
 async function runSnapshotCompareCommand(
   runtime: RuntimeDependencies,
-  beforeInput: string,
-  afterInput: string,
+  beforeInput: string | undefined,
+  afterInput: string | undefined,
 ): Promise<void> {
-  const before = snapshotLocation(beforeInput);
-  const after = snapshotLocation(afterInput);
+  const before = snapshotLocation(beforeInput, "before snapshot");
+  const after = snapshotLocation(afterInput, "after snapshot");
 
   if (before.snapshotDir !== after.snapshotDir) {
     throw new CliCommandError(
@@ -751,7 +766,17 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
   program
     .name("dossier")
     .description("Build reproducible UK company dossiers.")
-    .version("0.1.0");
+    .version("0.1.0")
+    .addHelpText(
+      "after",
+      [
+        "",
+        "Snapshot command forms:",
+        "  snapshot save <companyNumber> --snapshot-dir <path>",
+        "  snapshot list <companyNumber> --snapshot-dir <path>",
+        "  snapshot compare <before> <after>",
+      ].join("\n"),
+    );
 
   program
     .argument("[companyNumber]", "Companies House company number.")
@@ -762,11 +787,6 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
         companyNumber: string | undefined,
         options: DossierCommandOptions,
       ) => {
-        if (companyNumber === undefined) {
-          program.help();
-          return;
-        }
-
         try {
           await runDossierCommand(runtime, companyNumber, options);
         } catch (error) {
@@ -780,7 +800,7 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
   program
     .command("filings")
     .description("List and filter company filing history.")
-    .argument("<companyNumber>", "Companies House company number.")
+    .argument("[companyNumber]", "Companies House company number.")
     .option("--category <category>", "Filter by Companies House category.")
     .option("--from <date>", "Include filings on or after YYYY-MM-DD.")
     .option("--to <date>", "Include filings on or before YYYY-MM-DD.")
@@ -797,7 +817,7 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
     .description(
       "Retrieve filing document metadata and optionally write the file.",
     )
-    .argument("<documentId>", "Companies House document identifier.")
+    .argument("[documentId]", "Companies House document identifier.")
     .option(
       "--output-dir <path>",
       "Directory where the document file is written.",
@@ -845,8 +865,8 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
   snapshotCommand
     .command("save")
     .description("Save a company dossier snapshot.")
-    .argument("<companyNumber>", "Companies House company number.")
-    .requiredOption("--snapshot-dir <path>", "Directory for snapshot files.")
+    .argument("[companyNumber]", "Companies House company number.")
+    .option("--snapshot-dir <path>", "Directory for snapshot files.")
     .action(
       async (companyNumber: string, options: SnapshotDirectoryOptions) => {
         try {
@@ -860,8 +880,8 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
   snapshotCommand
     .command("list")
     .description("List saved company dossier snapshots.")
-    .argument("<companyNumber>", "Companies House company number.")
-    .requiredOption("--snapshot-dir <path>", "Directory for snapshot files.")
+    .argument("[companyNumber]", "Companies House company number.")
+    .option("--snapshot-dir <path>", "Directory for snapshot files.")
     .action(
       async (companyNumber: string, options: SnapshotDirectoryOptions) => {
         try {
@@ -875,9 +895,9 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
   snapshotCommand
     .command("compare")
     .description("Compare two saved company dossier snapshots.")
-    .argument("<before>", "Earlier snapshot file path.")
-    .argument("<after>", "Later snapshot file path.")
-    .action(async (before: string, after: string) => {
+    .argument("[before]", "Earlier snapshot file path.")
+    .argument("[after]", "Later snapshot file path.")
+    .action(async (before: string | undefined, after: string | undefined) => {
       try {
         await runSnapshotCompareCommand(runtime, before, after);
       } catch (error) {

@@ -232,6 +232,9 @@ describe("dossier CLI", () => {
     expect(help).toContain("document");
     expect(help).toContain("doctor");
     expect(help).toContain("snapshot");
+    expect(help).toContain("snapshot save");
+    expect(help).toContain("snapshot list");
+    expect(help).toContain("snapshot compare");
     expect(help).toContain("mcp");
     expect(help).not.toMatch(/api[ -]?key/i);
   });
@@ -281,6 +284,24 @@ describe("dossier CLI", () => {
     expect(output.company.companyNumber).toBe(companyNumber);
     expect(output.sections.filings?.status).toBe("complete");
     expect(output.sections.profile?.status).toBe("unavailable");
+  });
+
+  it("reports a missing root company number as exit 2 without a report", async () => {
+    const result = await runCli([]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Company number is required");
+  });
+
+  it("reports a missing root company number as JSON when JSON mode is requested", async () => {
+    const result = await runCli(["--format", "json"]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain('"error"');
+    expect(result.stderr).toContain('"code": "invalid_input"');
+    expect(result.stderr).toContain("Company number is required");
   });
 
   it("writes a Markdown dossier to a new output path without stdout noise", async () => {
@@ -374,6 +395,15 @@ describe("dossier CLI", () => {
     expect(output.items).toHaveLength(1);
     expect(output.items[0]?.category).toBe("accounts");
     expect(output.items[0]?.date).toBe("2026-01-15");
+  });
+
+  it("reports a missing filings company number as exit 2", async () => {
+    const result = await runCli(["filings"]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain('"code": "invalid_input"');
+    expect(result.stderr).toContain("Company number is required");
   });
 
   it("rejects invalid filing date filters with exit 2", async () => {
@@ -493,6 +523,15 @@ describe("dossier CLI", () => {
 
     expect(listed).toHaveLength(2);
     expect(comparison.hasChanges).toBe(true);
+  });
+
+  it("reports a missing snapshot directory as exit 2", async () => {
+    const result = await runCli(["snapshot", "save", companyNumber]);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain('"code": "invalid_input"');
+    expect(result.stderr).toContain("--snapshot-dir");
   });
 
   it("runs doctor JSON output without an API key in fixture-ready mode", async () => {
