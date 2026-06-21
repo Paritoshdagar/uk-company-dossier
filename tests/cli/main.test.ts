@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PaginatedCompaniesHouseResource } from "../../src/companies-house/endpoints.js";
 import type {
@@ -29,6 +29,7 @@ const payloadSha256 =
 
 afterEach(() => {
   process.env = originalEnvironment;
+  vi.restoreAllMocks();
 });
 
 interface CapturedCliRun {
@@ -36,6 +37,10 @@ interface CapturedCliRun {
   readonly stderr: string;
   readonly stdout: string;
 }
+
+type CliDependencies = Parameters<
+  typeof import("../../src/cli/main.js").createProgram
+>[0];
 
 function evidence(sourceUri: string): EvidenceRef {
   return {
@@ -129,9 +134,7 @@ function fixtureGateway(
 
 async function runCli(
   args: readonly string[],
-  dependencies: Parameters<
-    typeof import("../../src/cli/main.js").createProgram
-  >[0] = {},
+  dependencies: CliDependencies = {},
 ): Promise<CapturedCliRun> {
   const { createProgram } = await import("../../src/cli/main.js");
   const stdout: string[] = [];
@@ -174,6 +177,46 @@ async function runCli(
     ) {
       throw error;
     }
+  }
+
+  return {
+    exitCode,
+    stderr: stderr.join(""),
+    stdout: stdout.join(""),
+  };
+}
+
+async function runProductionCli(
+  args: readonly string[],
+  dependencies: CliDependencies = {},
+): Promise<CapturedCliRun> {
+  const { runCli: runProduction } = await import("../../src/cli/main.js");
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  let exitCode: number | undefined;
+  const exitSpy = vi.spyOn(process, "exit").mockImplementation((code) => {
+    throw new Error(`Unexpected process.exit(${String(code)})`);
+  });
+
+  try {
+    await runProduction(["node", "dossier", ...args], {
+      clock: {
+        now: () => generatedAt,
+      },
+      gateway: fixtureGateway(),
+      setExitCode: (code) => {
+        exitCode = code;
+      },
+      writeErr: (text) => {
+        stderr.push(text);
+      },
+      writeOut: (text) => {
+        stdout.push(text);
+      },
+      ...dependencies,
+    });
+  } finally {
+    exitSpy.mockRestore();
   }
 
   return {
@@ -237,6 +280,30 @@ describe("dossier CLI", () => {
     expect(help).toContain("snapshot compare");
     expect(help).toContain("mcp");
     expect(help).not.toMatch(/api[ -]?key/i);
+  });
+
+  it("preserves production help as stdout with exit 0", async () => {
+    const result = await runProductionCli(["--help"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("Usage:");
+    expect(result.stdout).toContain("snapshot compare");
+  });
+
+  it.each([
+    ["unknown root option", ["--bad-option"]],
+    ["root option missing a value", [companyNumber, "--format"]],
+    ["filings option missing a value", ["filings", companyNumber, "--from"]],
+    ["unknown snapshot command", ["snapshot", "nonsense"]],
+  ])("normalizes production parser errors for %s", async (_caseName, args) => {
+    const result = await runProductionCli(args);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain('"error"');
+    expect(result.stderr).toContain('"code": "invalid_input"');
+    expect(result.stderr).not.toContain("stack");
   });
 
   it("runs doctor JSON output without exposing the configured API key", async () => {
@@ -342,6 +409,40 @@ describe("dossier CLI", () => {
     expect(result.stderr).toContain('"code": "invalid_input"');
     await expect(readFile(outputPath, "utf8")).resolves.toBe("existing");
   });
+
+  it.each(["", "   "])(
+    "rejects blank dossier output path %j before service setup",
+    async (outputPath) => {
+      let serviceCalls = 0;
+      const failIfCalled = () => {
+        serviceCalls += 1;
+
+        return Promise.reject(
+          new Error("gateway should not be called for invalid output"),
+        );
+      };
+
+      const result = await runCli(
+        [companyNumber, "--format", "json", "--output", outputPath],
+        {
+          gateway: {
+            fetchCompanyCharges: failIfCalled,
+            fetchCompanyFilingHistory: failIfCalled,
+            fetchCompanyInsolvency: failIfCalled,
+            fetchCompanyOfficers: failIfCalled,
+            fetchCompanyProfile: failIfCalled,
+            fetchPersonsWithSignificantControl: failIfCalled,
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(2);
+      expect(serviceCalls).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain('"code": "invalid_input"');
+      expect(result.stderr).toContain("--output");
+    },
+  );
 
   it("validates company numbers before calling injected services", async () => {
     let serviceCalls = 0;

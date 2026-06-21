@@ -4,7 +4,7 @@ import { access, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { Command } from "commander";
+import { Command, CommanderError } from "commander";
 
 import {
   buildCompanyDossier,
@@ -122,6 +122,16 @@ const defaultCliDependencies = {
   Omit<CliDependencies, "doctorChecks" | "gateway" | "startMcp">
 >;
 
+function createRuntime(
+  dependencies: CliDependencies = {},
+): RuntimeDependencies {
+  return {
+    ...defaultCliDependencies,
+    ...dependencies,
+    retrieveDocumentIsInjected: dependencies.retrieveDocument !== undefined,
+  };
+}
+
 class CliCommandError extends Error {
   public readonly code: CliErrorCode;
   public readonly exitCode: CliExitCode;
@@ -190,6 +200,39 @@ function writeError(
   }
 
   runtime.setExitCode(normalized.exitCode);
+}
+
+function configureManagedParserOutput(
+  command: Command,
+  runtime: RuntimeDependencies,
+): void {
+  command.configureOutput({
+    writeErr: () => {
+      // Commander includes stack-free parser text in the thrown error. Suppress
+      // its direct stderr writes so runCli can emit one stable error envelope.
+    },
+    writeOut: runtime.writeOut,
+  });
+  command.exitOverride();
+
+  for (const childCommand of command.commands) {
+    configureManagedParserOutput(childCommand, runtime);
+  }
+}
+
+function isCommanderDisplayExit(error: CommanderError): boolean {
+  return (
+    error.exitCode === 0 &&
+    (error.code === "commander.helpDisplayed" ||
+      error.code === "commander.version")
+  );
+}
+
+function commanderParserError(error: CommanderError): CliCommandError {
+  const message =
+    error.message.trim().length === 0 ? "Invalid CLI input." : error.message;
+
+  return new CliCommandError("invalid_input", message, 2);
 }
 
 function normalizeCliError(error: unknown): CliCommandError {
@@ -546,9 +589,13 @@ async function runDossierCommand(
 ): Promise<void> {
   const companyNumber = parseCompanyNumberInput(companyNumberInput);
   const format = outputFormat(options);
+  const outputPath =
+    options.output === undefined
+      ? undefined
+      : parseRequiredPath(options.output, "--output");
 
-  if (options.output !== undefined) {
-    await assertOutputPathAvailable(options.output);
+  if (outputPath !== undefined) {
+    await assertOutputPathAvailable(outputPath);
   }
 
   const dossier = await buildCompanyDossier({
@@ -561,10 +608,10 @@ async function runDossierCommand(
       ? renderCompanyDossierJson(dossier)
       : renderCompanyDossierMarkdown(dossier);
 
-  if (options.output === undefined) {
+  if (outputPath === undefined) {
     runtime.writeOut(rendered);
   } else {
-    await writeOutputFile(options.output, rendered);
+    await writeOutputFile(outputPath, rendered);
   }
 
   runtime.setExitCode(0);
@@ -756,11 +803,7 @@ const unavailableDocumentClient: CompaniesHouseClient = {
 };
 
 export function createProgram(dependencies: CliDependencies = {}): Command {
-  const runtime: RuntimeDependencies = {
-    ...defaultCliDependencies,
-    ...dependencies,
-    retrieveDocumentIsInjected: dependencies.retrieveDocument !== undefined,
-  };
+  const runtime = createRuntime(dependencies);
   const program = new Command();
 
   program
@@ -923,7 +966,28 @@ export async function runCli(
   argv: readonly string[] = process.argv,
   dependencies?: CliDependencies,
 ): Promise<void> {
-  await createProgram(dependencies).parseAsync(Array.from(argv));
+  const runtime = createRuntime(dependencies);
+  const program = createProgram(dependencies);
+
+  configureManagedParserOutput(program, runtime);
+
+  try {
+    await program.parseAsync(Array.from(argv));
+  } catch (error) {
+    if (error instanceof CommanderError) {
+      if (isCommanderDisplayExit(error)) {
+        runtime.setExitCode(0);
+
+        return;
+      }
+
+      writeError(runtime, commanderParserError(error), { json: true });
+
+      return;
+    }
+
+    throw error;
+  }
 }
 
 function isExecutableEntrypoint(
