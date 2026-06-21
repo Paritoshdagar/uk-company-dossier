@@ -1,0 +1,19 @@
+{
+  "barcode": "X9Y8Z7",
+  "company_number": "SC123456",
+  "created_at": "2026-02-03T03:04:05.000Z",
+  "etag": "document-etag-001",
+  "links": {
+    "document": "/document/doc-pdf-001/content",
+    "self": "/document/doc-pdf-001"
+  },
+  "pages": 2,
+  "resources": {
+    "application/pdf": {
+      "content_length": 1024
+    },
+    "application/xhtml+xml": {
+      "content_length": 2048
+    }
+  }
+}
