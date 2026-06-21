@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 const execFile = promisify(execFileCallback);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
+const packageExportSmokeTimeoutMs = 20_000;
 
 async function execFileAtRepository(
   file: string,
@@ -22,48 +23,50 @@ async function execFileAtRepository(
 }
 
 describe("published package contract surface", () => {
-  it("packages the contract exports, schema files, and notices in the npm tarball", async () => {
-    const temporaryRoot = await mkdtemp(
-      join(tmpdir(), "uk-company-dossier-package-"),
-    );
-
-    try {
-      await execFileAtRepository(npmExecutable, ["run", "build"]);
-
-      const { stdout } = await execFileAtRepository(npmExecutable, [
-        "pack",
-        "--pack-destination",
-        temporaryRoot,
-        "--silent",
-      ]);
-      const tarballName = stdout.trim().split(/\r?\n/u).at(-1);
-
-      expect(tarballName).toMatch(/\.tgz$/u);
-
-      const installRoot = join(temporaryRoot, "install");
-      const runnerPath = join(installRoot, "runner.mjs");
-      const tarballPath = join(temporaryRoot, tarballName ?? "");
-
-      await mkdir(installRoot);
-      await execFile(
-        npmExecutable,
-        [
-          "install",
-          "--silent",
-          "--no-audit",
-          "--package-lock=false",
-          tarballPath,
-        ],
-        {
-          cwd: installRoot,
-          env: process.env,
-          maxBuffer: 10 * 1024 * 1024,
-        },
+  it(
+    "packages the contract exports, schema files, and notices in the npm tarball",
+    async () => {
+      const temporaryRoot = await mkdtemp(
+        join(tmpdir(), "uk-company-dossier-package-"),
       );
 
-      await writeFile(
-        runnerPath,
-        `
+      try {
+        await execFileAtRepository(npmExecutable, ["run", "build"]);
+
+        const { stdout } = await execFileAtRepository(npmExecutable, [
+          "pack",
+          "--pack-destination",
+          temporaryRoot,
+          "--silent",
+        ]);
+        const tarballName = stdout.trim().split(/\r?\n/u).at(-1);
+
+        expect(tarballName).toMatch(/\.tgz$/u);
+
+        const installRoot = join(temporaryRoot, "install");
+        const runnerPath = join(installRoot, "runner.mjs");
+        const tarballPath = join(temporaryRoot, tarballName ?? "");
+
+        await mkdir(installRoot);
+        await execFile(
+          npmExecutable,
+          [
+            "install",
+            "--silent",
+            "--no-audit",
+            "--package-lock=false",
+            tarballPath,
+          ],
+          {
+            cwd: installRoot,
+            env: process.env,
+            maxBuffer: 10 * 1024 * 1024,
+          },
+        );
+
+        await writeFile(
+          runnerPath,
+          `
           import { readFile } from "node:fs/promises";
           import { dirname, join } from "node:path";
           import { createRequire } from "node:module";
@@ -102,20 +105,22 @@ describe("published package contract surface", () => {
             throw new Error("Expected notices to be included in the package.");
           }
         `,
-        "utf8",
-      );
+          "utf8",
+        );
 
-      await execFile(process.execPath, [runnerPath], {
-        cwd: installRoot,
-        env: process.env,
-        maxBuffer: 10 * 1024 * 1024,
-      });
+        await execFile(process.execPath, [runnerPath], {
+          cwd: installRoot,
+          env: process.env,
+          maxBuffer: 10 * 1024 * 1024,
+        });
 
-      expect(basename(tarballPath)).toBe(tarballName);
-    } finally {
-      await rm(temporaryRoot, { force: true, recursive: true });
-    }
-  });
+        expect(basename(tarballPath)).toBe(tarballName);
+      } finally {
+        await rm(temporaryRoot, { force: true, recursive: true });
+      }
+    },
+    packageExportSmokeTimeoutMs,
+  );
 
   it("keeps JSON schemas and fixtures inside the repository formatting gate", async () => {
     const packageJson = JSON.parse(
