@@ -29,8 +29,7 @@ export interface SerializedDossierError {
 }
 
 const redactionText = "[REDACTED]";
-const authorizationPattern =
-  /\b(authorization\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;&"'}]+\s+[^\s,;&"'}]+|[^\s,;&"'}]+)/giu;
+const authorizationPattern = /\b(authorization\s*[:=]\s*)[^\r\n]*/giu;
 const apiKeyQueryPattern =
   /([?&](?:api[-_]?key|apikey|x-api-key)=)[^&#\s"']+/giu;
 const sensitiveFieldPattern =
@@ -46,10 +45,10 @@ const jsonSecretFieldPattern = new RegExp(
 
 export function redactSecretText(value: string): string {
   return value
+    .replace(jsonSecretFieldPattern, `$1$2$1$3"${redactionText}"`)
     .replace(authorizationPattern, `$1${redactionText}`)
     .replace(apiKeyQueryPattern, `$1${redactionText}`)
-    .replace(secretAssignmentPattern, `$1${redactionText}`)
-    .replace(jsonSecretFieldPattern, `$1$2$1$3${redactionText}`);
+    .replace(secretAssignmentPattern, `$1${redactionText}`);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

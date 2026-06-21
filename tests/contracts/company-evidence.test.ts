@@ -642,6 +642,56 @@ describe("safe dossier errors", () => {
     expect(redacted).toContain("[REDACTED]");
   });
 
+  it("redacts full authorization values for parameterized and multi-part schemes", () => {
+    const cases = [
+      {
+        input:
+          "Authorization: AWS4-HMAC-SHA256 Credential=abc, SignedHeaders=host, Signature=secret-signature",
+        leaks: [
+          "AWS4-HMAC-SHA256",
+          "Credential=abc",
+          "SignedHeaders=host",
+          "secret-signature",
+        ],
+      },
+      {
+        input:
+          'Authorization: Digest username="user", realm="realm", nonce="nonce", response="secret-response"',
+        leaks: [
+          "Digest",
+          'username="user"',
+          'realm="realm"',
+          'nonce="nonce"',
+          "secret-response",
+        ],
+      },
+      {
+        input: "Authorization: CustomScheme part-one part-two part-three",
+        leaks: ["CustomScheme", "part-one", "part-two", "part-three"],
+      },
+    ];
+
+    for (const { input, leaks } of cases) {
+      const redacted = redactSecretText(input);
+
+      expect(redacted).toBe("Authorization: [REDACTED]");
+
+      for (const leak of leaks) {
+        expect(redacted).not.toContain(leak);
+      }
+    }
+  });
+
+  it("keeps JSON-shaped authorization redaction valid and quoted", () => {
+    const jsonSecret = "json-secret";
+    const redacted = redactSecretText(
+      JSON.stringify({ authorization: `ApiKey ${jsonSecret}` }),
+    );
+
+    expect(redacted).not.toContain(jsonSecret);
+    expect(JSON.parse(redacted)).toEqual({ authorization: "[REDACTED]" });
+  });
+
   it("redacts common token field variants from assignments and JSON-shaped text", () => {
     const fields = [
       ["access", "token"].join("_"),
