@@ -231,7 +231,7 @@ export function getRetryPlan(input: RetryPlanInput): RetryPlan {
 
   if (retryAfterDelayMs !== undefined) {
     return {
-      delayMs: retryAfterDelayMs,
+      delayMs: Math.min(input.maxBackoffMs, retryAfterDelayMs),
       reason: "retry-after",
       retry: true,
     };
@@ -264,7 +264,16 @@ function headersToRecord(headers: Headers): Record<string, string> {
 }
 
 function resolveRequestUrl(pathOrUrl: string | URL, apiBaseUrl: string): URL {
-  return new URL(pathOrUrl, apiBaseUrl);
+  const baseUrl = new URL(apiBaseUrl);
+  const requestUrl = new URL(pathOrUrl, baseUrl);
+
+  if (requestUrl.origin !== baseUrl.origin) {
+    throw new CompaniesHouseHttpError(
+      "Companies House request URL must use the configured Companies House API origin.",
+    );
+  }
+
+  return requestUrl;
 }
 
 function createFetchHeaders(apiKey: string, userAgent: string): Headers {
@@ -433,6 +442,12 @@ export function createCompaniesHouseClient(
     async requestJson<TData = unknown>(
       pathOrUrl: string | URL,
     ): Promise<CompaniesHouseJsonResponse<TData>> {
+      const url = resolveRequestUrl(pathOrUrl, config.apiBaseUrl);
+      const requestedUrl = url.toString();
+      const redactedUrl = redactRequestUrl(
+        requestedUrl,
+        config.sensitiveQueryKeys,
+      );
       const apiKey = config.getApiKey();
 
       if (apiKey === undefined) {
@@ -440,13 +455,6 @@ export function createCompaniesHouseClient(
           "Companies House API key is not configured.",
         );
       }
-
-      const url = resolveRequestUrl(pathOrUrl, config.apiBaseUrl);
-      const requestedUrl = url.toString();
-      const redactedUrl = redactRequestUrl(
-        requestedUrl,
-        config.sensitiveQueryKeys,
-      );
 
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         const headers = createFetchHeaders(apiKey, userAgent);

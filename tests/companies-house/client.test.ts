@@ -135,6 +135,24 @@ describe("Companies House HTTP client", () => {
     expect(headers.get("user-agent")).toMatch(/^uk-company-dossier\//u);
   });
 
+  it("rejects external absolute URLs before fetch or request logging", async () => {
+    const { client, fetchCalls, logEvents } = createHarness([]);
+
+    const error = await expectRejectsWith(
+      () =>
+        client.requestJson(
+          "https://other.example/company/00000006?access_token=do-not-leak",
+        ),
+      CompaniesHouseHttpError,
+    );
+
+    expect(error.message).toContain("configured Companies House API origin");
+    expect(fetchCalls).toEqual([]);
+    expect(logEvents).toEqual([]);
+    expect(JSON.stringify(error)).not.toContain("do-not-leak");
+    expect(JSON.stringify(error)).not.toMatch(/authorization/i);
+  });
+
   it("logs request metadata without Authorization or sensitive query values", async () => {
     const { client, logEvents } = createHarness([jsonResponse('{"ok":true}')]);
 
@@ -220,7 +238,7 @@ describe("Companies House HTTP client", () => {
     const { client, fetchCalls, sleepCalls } = createHarness([
       jsonResponse(rateLimitBody, {
         headers: {
-          "retry-after": "2",
+          "retry-after": "1",
         },
         status: 429,
       }),
@@ -231,7 +249,43 @@ describe("Companies House HTTP client", () => {
 
     expect(result.data).toEqual({ ok: true });
     expect(fetchCalls).toHaveLength(2);
-    expect(sleepCalls).toEqual([2_000]);
+    expect(sleepCalls).toEqual([1_000]);
+  });
+
+  it("caps huge numeric Retry-After delays to the configured max backoff", async () => {
+    const { client, fetchCalls, sleepCalls } = createHarness([
+      jsonResponse('{"error":"rate limit"}', {
+        headers: {
+          "retry-after": "999999",
+        },
+        status: 429,
+      }),
+      jsonResponse('{"ok":true}'),
+    ]);
+
+    const result = await client.requestJson("/company/00000006");
+
+    expect(result.data).toEqual({ ok: true });
+    expect(fetchCalls).toHaveLength(2);
+    expect(sleepCalls).toEqual([1_000]);
+  });
+
+  it("caps far-future HTTP-date Retry-After delays to the configured max backoff", async () => {
+    const { client, fetchCalls, sleepCalls } = createHarness([
+      jsonResponse('{"error":"rate limit"}', {
+        headers: {
+          "retry-after": "Wed, 03 Feb 2126 04:05:06 GMT",
+        },
+        status: 429,
+      }),
+      jsonResponse('{"ok":true}'),
+    ]);
+
+    const result = await client.requestJson("/company/00000006");
+
+    expect(result.data).toEqual({ ok: true });
+    expect(fetchCalls).toHaveLength(2);
+    expect(sleepCalls).toEqual([1_000]);
   });
 
   it("uses capped exponential backoff with bounded deterministic jitter when Retry-After is absent", async () => {
