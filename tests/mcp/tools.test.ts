@@ -317,7 +317,7 @@ async function createStdioFixtureEntrypoint(): Promise<{
   const loaderSource = `
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { sep } from "node:path";
+import { isAbsolute, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from ${JSON.stringify(typescriptUrl)};
 
@@ -330,7 +330,7 @@ function sourceUrl(specifier, parentURL) {
   try {
     if (specifier.startsWith("file:")) {
       url = new URL(specifier);
-    } else if (specifier.startsWith("/")) {
+    } else if (isAbsolute(specifier)) {
       url = pathToFileURL(specifier);
     } else if (specifier.startsWith(".") && parentURL !== undefined) {
       url = new URL(specifier, parentURL);

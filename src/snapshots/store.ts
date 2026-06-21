@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { link, mkdir, readdir, unlink, open } from "node:fs/promises";
+import { link, mkdir, open, readdir, unlink } from "node:fs/promises";
 import { basename, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -200,6 +200,39 @@ async function writeFileAtomically(
   contents: string,
 ): Promise<string> {
   const targetPath = resolve(root, fileName);
+
+  if (process.platform === "win32") {
+    let targetCreated = false;
+
+    try {
+      const fileHandle = await open(
+        targetPath,
+        constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY,
+        0o600,
+      );
+      targetCreated = true;
+
+      try {
+        await fileHandle.writeFile(contents, "utf8");
+        await fileHandle.sync();
+      } finally {
+        await fileHandle.close();
+      }
+
+      return targetPath;
+    } catch (error) {
+      if (targetCreated) {
+        await unlink(targetPath).catch(() => undefined);
+      }
+
+      if (isNodeError(error) && error.code === "EEXIST") {
+        throw snapshotError(`Snapshot already exists: ${fileName}`, error);
+      }
+
+      throw error;
+    }
+  }
+
   const temporaryPath = resolve(root, `.${fileName}.${randomUUID()}.tmp`);
   let temporaryCreated = false;
 

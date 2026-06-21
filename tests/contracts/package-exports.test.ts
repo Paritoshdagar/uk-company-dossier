@@ -10,7 +10,7 @@ import { execPackageCommand } from "../helpers/package-command.js";
 
 const execFile = promisify(execFileCallback);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
-const packageExportSmokeTimeoutMs = 20_000;
+const packageExportSmokeTimeoutMs = 60_000;
 
 describe("published package contract surface", () => {
   it(

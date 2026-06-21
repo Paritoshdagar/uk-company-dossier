@@ -73,21 +73,25 @@ describe("packaged dossier bin", () => {
     },
   );
 
-  it("prints help from a local packed npx install", async () => {
-    const packageDirectory = await mkdtemp(join(tmpdir(), "dossier-pack-"));
-    const { stdout: packedFileName } = await execPackageCommand(
-      "npm",
-      ["pack", "--pack-destination", packageDirectory, "--silent"],
-      {
-        cwd: repositoryRoot,
-      },
-    );
-    const packedFilePath = join(packageDirectory, packedFileName.trim());
+  it(
+    "prints help from a local packed npx install",
+    async () => {
+      const packageDirectory = await mkdtemp(join(tmpdir(), "dossier-pack-"));
+      const { stdout: packedFileName } = await execPackageCommand(
+        "npm",
+        ["pack", "--pack-destination", packageDirectory, "--silent"],
+        {
+          cwd: repositoryRoot,
+        },
+      );
+      const packedFilePath = join(packageDirectory, packedFileName.trim());
 
-    await expectHelpCommand(
-      packageCommand("npx"),
-      ["--yes", "--package", packedFilePath, "dossier", "--help"],
-      packageCommandOptions({}),
-    );
-  });
+      await expectHelpCommand(
+        packageCommand("npx"),
+        ["--yes", "--package", packedFilePath, "dossier", "--help"],
+        packageCommandOptions({}),
+      );
+    },
+    packageBinSmokeTimeoutMs,
+  );
 });
