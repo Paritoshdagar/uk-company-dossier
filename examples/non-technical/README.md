@@ -7,7 +7,6 @@ Start with the guided workflow:
 The recommended first output is Markdown:
 
 ```bash
-mkdir -p out
 npm run cli -- 00445790 --format markdown --output out/company-dossier.md
 ```
 

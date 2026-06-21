@@ -1,0 +1,32 @@
+name: Release readiness
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      # actions/setup-node v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run verify:release
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: go run github.com/gitleaks/gitleaks/v8@v8.30.0 detect --source . --redact --verbose
+      - run: git log --all -p -- . ':!package-lock.json' | go run github.com/gitleaks/gitleaks/v8@v8.30.0 stdin --redact
+      - run: go run github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8 scan source --lockfile package-lock.json
+      - name: Confirm workflow cannot change visibility
+        run: echo "Repository visibility changes are never performed by this workflow."

@@ -31,7 +31,7 @@ Every dossier fact is linked back to upstream evidence with retrieval time, sour
 flowchart TD
   A["Clone repository"] --> B["Install Node.js 22"]
   B --> C["Run npm install"]
-  C --> D["Copy .env.example to .env"]
+  C --> D["Create local .env from template"]
   D --> E{"Need live mode?"}
   E -- "No" --> F["Run fixture-ready checks"]
   E -- "Yes" --> G["Create Companies House API key"]
@@ -52,10 +52,10 @@ The project targets Node.js 22. The repo includes an `.nvmrc` for version manage
 
 ### 2. Create your local environment file
 
-Copy the example file:
+Create your local `.env` from the `.env.example` template:
 
 ```bash
-cp .env.example .env
+npm run env:init
 ```
 
 Then edit `.env` locally. Never commit `.env`.
@@ -104,16 +104,16 @@ npm run cli -- doctor --live
 Build a JSON dossier:
 
 ```bash
-mkdir -p out
 npm run cli -- 00445790 --format json --output out/tesco-dossier.json
 ```
 
 Build a Markdown dossier:
 
 ```bash
-mkdir -p out
 npm run cli -- 00445790 --format markdown --output out/tesco-dossier.md
 ```
+
+Output parent directories are created automatically.
 
 List filings with filters:
 

@@ -48,7 +48,7 @@ When docs or code cite API semantics, link to the official source used.
 ```bash
 npm install
 npm run build
-cp .env.example .env
+npm run env:init
 ```
 
 Users must create their own Companies House API key, add it to `.env`, and never commit `.env`.
@@ -113,12 +113,13 @@ After build:
 npm run cli -- --help
 npm run cli -- doctor
 npm run cli -- doctor --live
-mkdir -p out
 npm run cli -- 00445790 --format json --output out/example-dossier.json
 npx vitest run tests/mcp/tools.test.ts
 ```
 
 The MCP server is a long-running stdio service. Start it with `npm run cli -- mcp` only when an MCP client owns the process.
+
+Do not add Bash-only, macOS-only, Linux-only, or Windows-only commands to public setup docs unless separate platform-specific alternatives are also documented. Prefer Node/npm commands that work on Windows, macOS, and Linux.
 
 Only run live commands when a key is available locally. Keep generated `out/` and snapshot files out of commits unless the task explicitly asks for public fixtures.
 

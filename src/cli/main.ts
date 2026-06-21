@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { access, writeFile } from "node:fs/promises";
+import { access, mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -426,6 +426,7 @@ async function writeOutputFile(
   content: string,
 ): Promise<void> {
   try {
+    await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(outputPath, content, { flag: "wx" });
   } catch (error) {
     if (isNodeError(error) && error.code === "EEXIST") {

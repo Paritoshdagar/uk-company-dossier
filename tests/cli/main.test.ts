@@ -390,6 +390,25 @@ describe("dossier CLI", () => {
     );
   });
 
+  it("creates missing parent directories for dossier output paths", async () => {
+    const directory = await tempDirectory();
+    const outputPath = join(directory, "nested", "reports", "dossier.json");
+    const result = await runCli([
+      companyNumber,
+      "--format",
+      "json",
+      "--output",
+      outputPath,
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
+    await expect(readFile(outputPath, "utf8")).resolves.toContain(
+      `"companyNumber": "${companyNumber}"`,
+    );
+  });
+
   it("refuses to overwrite an existing dossier output path with exit 2", async () => {
     const directory = await tempDirectory();
     const outputPath = join(directory, "dossier.json");

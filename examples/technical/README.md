@@ -7,7 +7,6 @@ Start with the integration workflow:
 The recommended first output is JSON:
 
 ```bash
-mkdir -p out
 npm run cli -- 00445790 --format json --output out/company-dossier.json
 ```
 

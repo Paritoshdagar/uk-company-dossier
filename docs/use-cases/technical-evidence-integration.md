@@ -18,7 +18,6 @@ Build a JSON dossier and feed it to downstream tooling:
 
 ```bash
 npm run build
-mkdir -p out
 npm run cli -- 00445790 --format json --output out/company-dossier.json
 ```
 

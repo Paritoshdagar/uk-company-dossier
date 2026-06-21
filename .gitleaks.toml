@@ -1,0 +1,12 @@
+title = "uk-company-dossier secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public environment-template variable name without a value"
+regexes = [
+  '''COMPANIES_HOUSE_API_KEY=$''',
+  '''COMPANIES_HOUSE_API_KEY[[:space:]]*=[[:space:]]*"\$\{COMPANIES_HOUSE_API_KEY\}"''',
+  '''"COMPANIES_HOUSE_API_KEY"[[:space:]]*:[[:space:]]*"\$\{COMPANIES_HOUSE_API_KEY\}"'''
+]

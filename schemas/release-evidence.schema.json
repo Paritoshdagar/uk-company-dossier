@@ -1,0 +1,81 @@
+{
+  "$id": "https://raw.githubusercontent.com/Paritoshdagar/uk-company-dossier/v1.0.0/schemas/release-evidence.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "repository": {
+      "const": "uk-company-dossier"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "commitSha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "git": {
+      "additionalProperties": false,
+      "properties": {
+        "visibility": {
+          "enum": ["PRIVATE", "PUBLIC", "INTERNAL", "unknown"],
+          "type": "string"
+        },
+        "trackedFileCount": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": ["visibility", "trackedFileCount"],
+      "type": "object"
+    },
+    "checks": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "enum": ["passed", "not-recorded"],
+            "type": "string"
+          }
+        },
+        "required": ["name", "status"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "artifacts": {
+      "additionalProperties": false,
+      "properties": {
+        "companyEvidenceSchemaSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "packageLockSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": ["companyEvidenceSchemaSha256", "packageLockSha256"],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "repository",
+    "generatedAt",
+    "commitSha",
+    "git",
+    "checks",
+    "artifacts"
+  ],
+  "title": "ReleaseEvidence",
+  "type": "object"
+}

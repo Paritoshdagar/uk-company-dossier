@@ -40,21 +40,22 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc --project tsconfig.json && chmod 755 dist/cli/main.js bin/dossier.mjs",
+    "build": "node scripts/build.mjs",
+    "env:init": "node scripts/init-env.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js bin/dossier.mjs scripts/unavailable.mjs \"schemas/**/*.json\" \"src/**/*.ts\" \"tests/**/*.ts\" \"tests/fixtures/**/*.json\"",
+    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js bin/dossier.mjs \"scripts/**/*.mjs\" \"schemas/**/*.json\" \"src/**/*.ts\" \"tests/**/*.ts\" \"tests/fixtures/**/*.json\"",
     "doctor": "npm run cli -- doctor",
     "cli": "node --enable-source-maps dist/cli/main.js",
     "mcp": "node scripts/unavailable.mjs \"MCP service\"",
     "examples:select": "npm run build --silent && node --enable-source-maps dist/examples/random-picker.js",
     "docs:mermaid": "node scripts/extract-mermaid.mjs",
     "docs:links": "node scripts/check-links.mjs",
-    "verify:commit": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
-    "verify:push": "npm run verify:commit && npm run test:coverage && npm audit --omit=dev",
-    "verify:release": "npm run verify:push && npm audit"
+    "verify:commit": "node scripts/verify-commit.mjs",
+    "verify:push": "node scripts/verify-push.mjs",
+    "verify:release": "node scripts/verify-release.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",

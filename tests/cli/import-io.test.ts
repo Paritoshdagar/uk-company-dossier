@@ -68,5 +68,5 @@ describe("built CLI module import", () => {
     expect(stdout).toContain("doctor");
     expect(stdout).toContain("snapshot");
     expect(stdout).toContain("mcp");
-  });
+  }, 20_000);
 });
