@@ -410,7 +410,7 @@
             "type": "string"
           },
           {
-            "pattern": "[?&](?:[aA][pP][iI][-_]?[kK][eE][yY]|[aA][pP][iI][kK][eE][yY]|[xX]-[aA][pP][iI]-[kK][eE][yY]|[aA][pP][iI][-_]?[tT][oO][kK][eE][nN]|[aA][pP][iI][tT][oO][kK][eE][nN]|[aA][cC][cC][eE][sS][sS][-_]?[tT][oO][kK][eE][nN]|[aA][cC][cC][eE][sS][sS][tT][oO][kK][eE][nN]|[rR][eE][fF][rR][eE][sS][hH][-_]?[tT][oO][kK][eE][nN]|[rR][eE][fF][rR][eE][sS][hH][tT][oO][kK][eE][nN]|[iI][dD][-_]?[tT][oO][kK][eE][nN]|[iI][dD][tT][oO][kK][eE][nN]|[tT][oO][kK][eE][nN]|[sS][eE][cC][rR][eE][tT]|[pP][aA][sS][sS][wW][oO][rR][dD]|[cC][rR][eE][dD][eE][nN][tT][iI][aA][lL]|[cC][lL][iI][eE][nN][tT][-_]?[sS][eE][cC][rR][eE][tT]|[pP][rR][iI][vV][aA][tT][eE][-_]?[kK][eE][yY]|[aA][uU][tT][hH][oO][rR][iI][zZ][aA][tT][iI][oO][nN])=",
+            "pattern": "[?&](?:[aA][pP][iI][-_]?[kK][eE][yY]|[aA][pP][iI][kK][eE][yY]|[xX]-[aA][pP][iI]-[kK][eE][yY]|[aA][pP][iI][-_]?[tT][oO][kK][eE][nN]|[aA][pP][iI][tT][oO][kK][eE][nN]|[aA][cC][cC][eE][sS][sS][-_]?[tT][oO][kK][eE][nN]|[aA][cC][cC][eE][sS][sS][tT][oO][kK][eE][nN]|[rR][eE][fF][rR][eE][sS][hH][-_]?[tT][oO][kK][eE][nN]|[rR][eE][fF][rR][eE][sS][hH][tT][oO][kK][eE][nN]|[iI][dD][-_]?[tT][oO][kK][eE][nN]|[iI][dD][tT][oO][kK][eE][nN]|[tT][oO][kK][eE][nN]|[sS][eE][cC][rR][eE][tT]|[pP][aA][sS][sS][wW][oO][rR][dD]|[cC][rR][eE][dD][eE][nN][tT][iI][aA][lL]|[cC][lL][iI][eE][nN][tT][-_]?[sS][eE][cC][rR][eE][tT]|[pP][rR][iI][vV][aA][tT][eE][-_]?[kK][eE][yY]|[aA][uU][tT][hH][oO][rR][iI][zZ][aA][tT][iI][oO][nN])(?:=|[&#]|$)",
             "type": "string"
           }
         ]

@@ -522,6 +522,24 @@ describe("company evidence Zod contract", () => {
         },
       },
       {
+        description: "evidence URI with bare token query key",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://vendor.example/source.json?token",
+          );
+        },
+      },
+      {
+        description: "evidence URI with bare token query key before safe key",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://vendor.example/source.json?token&company=00000006",
+          );
+        },
+      },
+      {
         description: "evidence URI with encoded access token query key",
         mutate: (dossier: CompanyDossier) => {
           setFirstEvidenceSourceUri(
@@ -544,6 +562,13 @@ describe("company evidence Zod contract", () => {
         mutate: (dossier: CompanyDossier) => {
           dossier.sourceAttribution.sourceUri =
             "https://api.company-information.service.gov.uk/?access_token=value";
+        },
+      },
+      {
+        description: "official URI with bare API key query key",
+        mutate: (dossier: CompanyDossier) => {
+          dossier.sourceAttribution.sourceUri =
+            "https://api.company-information.service.gov.uk/?api_key";
         },
       },
       {
