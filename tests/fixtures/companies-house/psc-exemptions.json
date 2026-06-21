@@ -1,0 +1,15 @@
+{
+  "exemptions": [
+    {
+      "exemption_type": "psc-exempt-as-company-listed-on-regulated-market",
+      "items": [
+        {
+          "exempt_from": "psc-disclosure",
+          "exempt_to": "psc-disclosure",
+          "kind": "psc-exemption"
+        }
+      ]
+    }
+  ],
+  "kind": "persons-with-significant-control-exemptions"
+}
