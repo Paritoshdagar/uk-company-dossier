@@ -39,7 +39,7 @@ const secretAssignmentPattern = new RegExp(
   "giu",
 );
 const jsonSecretFieldPattern = new RegExp(
-  `("?)(authorization|${sensitiveFieldPattern})\\1(\\s*:\\s*)("[^"]*"|'[^']*'|[^\\s,}&]+)`,
+  `("?)(authorization|${sensitiveFieldPattern})\\1(\\s*:\\s*)("(?:\\\\.|[^"\\\\])*"|'[^']*'|[^\\s,}&]+)`,
   "giu",
 );
 

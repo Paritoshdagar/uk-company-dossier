@@ -692,6 +692,24 @@ describe("safe dossier errors", () => {
     expect(JSON.parse(redacted)).toEqual({ authorization: "[REDACTED]" });
   });
 
+  it("keeps JSON-shaped authorization redaction valid when values contain escaped quotes", () => {
+    const redacted = redactSecretText(
+      JSON.stringify({
+        authorization:
+          'Digest username="user", nonce="nonce-value", response="secret-response"',
+        other: "ok",
+      }),
+    );
+
+    expect(redacted).not.toContain("nonce-value");
+    expect(redacted).not.toContain("secret-response");
+    expect(redacted).not.toContain("username");
+    expect(JSON.parse(redacted)).toEqual({
+      authorization: "[REDACTED]",
+      other: "ok",
+    });
+  });
+
   it("redacts common token field variants from assignments and JSON-shaped text", () => {
     const fields = [
       ["access", "token"].join("_"),
