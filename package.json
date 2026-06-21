@@ -49,7 +49,7 @@
     "doctor": "npm run cli -- doctor",
     "cli": "node --enable-source-maps dist/cli/main.js",
     "mcp": "node scripts/unavailable.mjs \"MCP service\"",
-    "examples:select": "node scripts/unavailable.mjs \"example selector\"",
+    "examples:select": "npm run build --silent && node --enable-source-maps dist/examples/random-picker.js",
     "docs:mermaid": "node scripts/unavailable.mjs \"Mermaid documentation validation\"",
     "docs:links": "node scripts/unavailable.mjs \"documentation link checking\"",
     "verify:commit": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",

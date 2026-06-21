@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshotUri": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+  "snapshotDate": "2026-06-01",
+  "snapshotSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "candidates": [
+    {
+      "companyNumber": " 1 ",
+      "companyStatus": "active",
+      "eligibilityPool": "active-private-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000002",
+      "companyStatus": "active",
+      "eligibilityPool": "active-private-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000002",
+      "companyStatus": "active",
+      "eligibilityPool": "active-private-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000003",
+      "companyStatus": "active",
+      "eligibilityPool": "active-public-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000004",
+      "companyStatus": "dissolved",
+      "eligibilityPool": "dissolved-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000005",
+      "companyStatus": "active",
+      "eligibilityPool": "unregistered-author-list",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "not-a-number",
+      "companyStatus": "active",
+      "eligibilityPool": "active-private-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000006",
+      "eligibilityPool": "active-private-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    },
+    {
+      "companyNumber": "00000007",
+      "companyStatus": "active",
+      "eligibilityPool": "active-private-company",
+      "snapshotSource": "https://download.companieshouse.gov.uk/BasicCompanyData-2026-06-01.zip",
+      "snapshotDate": "2026-06-01"
+    }
+  ]
+}

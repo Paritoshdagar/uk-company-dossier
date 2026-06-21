@@ -78,7 +78,6 @@ describe("unavailable planned capability scripts", () => {
 
   it.each([
     ["mcp", "MCP service"],
-    ["examples:select", "example selector"],
     ["docs:mermaid", "Mermaid documentation validation"],
     ["docs:links", "documentation link checking"],
   ])(

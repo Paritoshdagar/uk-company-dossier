@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "algorithm": "sha256(seed + \"\\u0000\" + canonicalCompanyNumber); sort by hash ascending, then company number ascending",
+  "strata": [
+    {
+      "name": "active-private-company",
+      "companyStatus": "active",
+      "count": 1,
+      "description": "Companies House snapshot records with company status active and an objective private-company eligibility marker."
+    },
+    {
+      "name": "active-public-company",
+      "companyStatus": "active",
+      "count": 1,
+      "description": "Companies House snapshot records with company status active and an objective public-company eligibility marker."
+    },
+    {
+      "name": "dissolved-company",
+      "companyStatus": "dissolved",
+      "count": 1,
+      "description": "Companies House snapshot records with company status dissolved."
+    }
+  ],
+  "exclusions": [
+    {
+      "reason": "invalid-company-number",
+      "description": "The company number cannot be canonicalised to a Companies House numeric or prefixed eight-character number."
+    },
+    {
+      "reason": "missing-company-status",
+      "description": "The candidate snapshot record does not include a company status."
+    },
+    {
+      "reason": "duplicate-company-number",
+      "description": "A prior candidate in the same snapshot already provided the canonical company number."
+    },
+    {
+      "reason": "outside-eligibility-strata",
+      "description": "The candidate eligibility pool was not one of the predeclared strata."
+    },
+    {
+      "reason": "company-status-mismatch",
+      "description": "The candidate status did not match the status declared for its eligibility stratum."
+    }
+  ]
+}
