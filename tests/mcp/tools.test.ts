@@ -291,6 +291,12 @@ function expectString(value: unknown): string {
   return value as string;
 }
 
+function expectArray(value: unknown): unknown[] {
+  expect(Array.isArray(value)).toBe(true);
+
+  return value as unknown[];
+}
+
 async function createStdioFixtureEntrypoint(): Promise<{
   readonly loaderPath: string;
   readonly scriptPath: string;
@@ -577,6 +583,23 @@ describe("company dossier MCP tool contracts", () => {
     expect(JSON.stringify(result)).not.toContain("stack");
   });
 
+  it("redacts unknown tool names before returning structured tool errors", async () => {
+    const result = await executeDossierMcpTool(
+      "missing authorization: Bearer should-not-leak",
+      {},
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: "invalid_input",
+      },
+      ok: false,
+    });
+    expect(JSON.stringify(result)).not.toContain("should-not-leak");
+    expect(JSON.stringify(result)).not.toContain("stack");
+  });
+
   it("builds schema-valid dossier evidence through the shared dossier service", async () => {
     const result = await executeDossierMcpTool(
       "build_company_dossier",
@@ -688,6 +711,28 @@ describe("company dossier MCP tool contracts", () => {
     ]);
   });
 
+  it("rejects impossible filing date filters as structured input errors", async () => {
+    const result = await executeDossierMcpTool(
+      "list_company_filings",
+      {
+        companyNumber,
+        from: "2026-02-31",
+      },
+      {
+        gateway: fixtureGateway(),
+      },
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: "invalid_input",
+      },
+      ok: false,
+    });
+    expect(JSON.stringify(result)).not.toContain("stack");
+  });
+
   it("saves one explicit dossier snapshot and confines snapshot comparison to the snapshot directory", async () => {
     const snapshotDir = await temporaryDirectory();
     const dossierResult = await executeDossierMcpTool(
@@ -775,6 +820,47 @@ describe("company dossier MCP tool contracts", () => {
     expect(JSON.stringify(result)).not.toContain("stack");
   });
 
+  it("rejects unsupported document content types at the MCP boundary", async () => {
+    const client = new QueueCompaniesHouseClient([
+      jsonResponse(
+        "/document/doc-pdf-001",
+        {
+          links: {
+            document: "/document/doc-pdf-001/content",
+          },
+          resources: {
+            "application/pdf": {
+              content_length: 100,
+            },
+          },
+        },
+        documentApiBaseUrl,
+      ),
+    ]);
+    const result = await executeDossierMcpTool(
+      "get_filing_document",
+      {
+        documentId: "doc-pdf-001",
+        requestedContentType: "text/html",
+      },
+      {
+        client,
+        documentApiBaseUrl,
+      },
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: "invalid_input",
+      },
+      ok: false,
+    });
+    expect(client.jsonRequests).toEqual([]);
+    expect(client.byteRequests).toEqual([]);
+    expect(JSON.stringify(result)).not.toContain("stack");
+  });
+
   it("caps search page size and document byte size", async () => {
     const searchClient = new QueueCompaniesHouseClient([
       jsonResponse("/search/companies?q=alpha&items_per_page=25", {
@@ -853,6 +939,53 @@ describe("company dossier MCP tool contracts", () => {
         },
         ok: false,
       },
+    });
+  });
+
+  it("caps returned search items even when upstream sends extra results", async () => {
+    const searchClient = new QueueCompaniesHouseClient([
+      jsonResponse("/search/companies?q=alpha&items_per_page=1", {
+        items: [
+          {
+            company_name: "ALPHA-BETA HOLDINGS LIMITED",
+            company_number: companyNumber,
+            company_status: "active",
+            company_type: "ltd",
+          },
+          {
+            company_name: "EXTRA RESULT LIMITED",
+            company_number: "SC654321",
+            company_status: "active",
+            company_type: "ltd",
+          },
+        ],
+        items_per_page: 1,
+        page_number: 1,
+        total_results: 2,
+      }),
+    ]);
+    const result = await executeDossierMcpTool(
+      "search_companies",
+      {
+        query: "alpha",
+      },
+      {
+        client: searchClient,
+        maxSearchItemsPerPage: 1,
+      },
+    );
+    const content = expectJsonObject(result.structuredContent);
+    const items = expectArray(content.items);
+
+    expect(result.isError).toBeUndefined();
+    expect(content).toMatchObject({
+      itemsPerPage: 1,
+      ok: true,
+    });
+    expect(items).toHaveLength(1);
+    expect(items.at(0)).toMatchObject({
+      companyName: "ALPHA-BETA HOLDINGS LIMITED",
+      companyNumber,
     });
   });
 });

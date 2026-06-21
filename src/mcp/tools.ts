@@ -117,6 +117,10 @@ const sectionKeys = [
   "insolvency",
   "filings",
 ] as const;
+const requestedDocumentContentTypes = [
+  "application/pdf",
+  "application/xhtml+xml",
+] as const;
 const publicRegisterLimitations =
   "Uses the Companies House public register only; results can be partial or unavailable when public endpoints omit data, rate-limit, or require live credentials/API key.";
 const defaultMcpClock: DossierClock = {
@@ -237,7 +241,7 @@ const getFilingDocumentInputSchema = objectSchema(
     requestedContentType: {
       description:
         "Optional allowed content type: application/pdf or application/xhtml+xml.",
-      enum: ["application/pdf", "application/xhtml+xml"],
+      enum: [...requestedDocumentContentTypes],
       type: "string",
     },
   },
@@ -371,7 +375,7 @@ export async function executeDossierMcpTool(
   if (tool === undefined) {
     return errorResult({
       code: "invalid_input",
-      message: `Unknown company dossier MCP tool: ${name}`,
+      message: `Unknown company dossier MCP tool: ${redactSecretText(name)}`,
     });
   }
 
@@ -628,14 +632,29 @@ function parseDateBound(
     return undefined;
   }
 
-  if (
-    !isoDatePattern.test(value) ||
-    Number.isNaN(Date.parse(`${value}T00:00:00Z`))
-  ) {
+  if (!isIsoCalendarDate(value)) {
     throw new McpToolInputError(`${label} must use YYYY-MM-DD format.`);
   }
 
   return value;
+}
+
+function isIsoCalendarDate(value: string): boolean {
+  if (!isoDatePattern.test(value)) {
+    return false;
+  }
+
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCFullYear(year);
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 function parseDocumentId(value: string): string {
@@ -916,7 +935,10 @@ function numberValue(
     : undefined;
 }
 
-function normaliseSearchItems(data: unknown): readonly ToolResultPayload[] {
+function normaliseSearchItems(
+  data: unknown,
+  limit: number,
+): readonly ToolResultPayload[] {
   if (
     typeof data !== "object" ||
     data === null ||
@@ -943,7 +965,8 @@ function normaliseSearchItems(data: unknown): readonly ToolResultPayload[] {
       ...(stringValue(item, "company_type") !== undefined
         ? { companyType: stringValue(item, "company_type") }
         : {}),
-    }));
+    }))
+    .slice(0, limit);
 }
 
 async function searchCompanies(
@@ -975,7 +998,7 @@ async function searchCompanies(
 
   return {
     evidence: [evidence],
-    items: normaliseSearchItems(response.data),
+    items: normaliseSearchItems(response.data, itemsPerPage),
     itemsPerPage,
     query,
     ...(numberValue(data, "total_results") !== undefined
@@ -1038,7 +1061,11 @@ async function getFilingDocument(
     optionalEnum(record, "format", ["metadata", "base64"] as const) ??
     "metadata";
   const outputDirectory = optionalString(record, "outputDirectory");
-  const requestedContentType = optionalString(record, "requestedContentType");
+  const requestedContentType = optionalEnum(
+    record,
+    "requestedContentType",
+    requestedDocumentContentTypes,
+  );
   const resolvedDocumentApiBaseUrl =
     dependencies.documentApiBaseUrl ??
     dependencies.environment?.documentApiBaseUrl;
