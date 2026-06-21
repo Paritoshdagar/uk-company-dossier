@@ -51,6 +51,7 @@
     "cli": "node --enable-source-maps dist/cli/main.js",
     "mcp": "node scripts/unavailable.mjs \"MCP service\"",
     "examples:select": "npm run build --silent && node --enable-source-maps dist/examples/random-picker.js",
+    "examples:ftse350": "npm run build --silent && node scripts/generate-ftse350-examples.mjs",
     "docs:mermaid": "node scripts/extract-mermaid.mjs",
     "docs:links": "node scripts/check-links.mjs",
     "verify:commit": "node scripts/verify-commit.mjs",

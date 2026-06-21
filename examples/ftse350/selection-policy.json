@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "algorithm": "sha256(seed + \"\\u0000\" + canonicalCompanyNumber); sort by hash ascending, then company number ascending",
+  "strata": [
+    {
+      "name": "ftse350-public-company",
+      "companyStatus": "active",
+      "count": 5,
+      "description": "Active PLC records from a predeclared FTSE 350 public-company candidate pool, validated against live Companies House profile records before publication."
+    }
+  ],
+  "exclusions": [
+    {
+      "reason": "invalid-company-number",
+      "description": "The company number cannot be canonicalised to a Companies House numeric or prefixed eight-character number."
+    },
+    {
+      "reason": "missing-company-status",
+      "description": "The candidate snapshot record does not include a company status."
+    },
+    {
+      "reason": "duplicate-company-number",
+      "description": "A prior candidate in the same snapshot already provided the canonical company number."
+    },
+    {
+      "reason": "outside-eligibility-strata",
+      "description": "The candidate eligibility pool was not one of the predeclared strata."
+    },
+    {
+      "reason": "company-status-mismatch",
+      "description": "The candidate status did not match the status declared for its eligibility stratum."
+    }
+  ]
+}

@@ -1,0 +1,313 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-06-21T19:42:21.491Z",
+  "disclaimer": "Demonstration companies were selected programmatically by this repository's documented random-company picker from predeclared Companies House eligibility pools. The author did not choose or rank the selected companies. Inclusion does not imply endorsement, criticism, concern, affiliation, or preference. Public-register information is shown solely to demonstrate software behaviour, may change, and must be verified at Companies House before use.",
+  "seed": "ftse350-public-demo-v1",
+  "sources": {
+    "candidateSourceUri": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table",
+    "companiesHouseSourceUri": "https://api.company-information.service.gov.uk",
+    "selectionManifestPolicyHash": "6ca5484131fe65a6c0e34710c08928810a645a579e6cbe6e1ff688095c385cfc"
+  },
+  "selectedCompanies": [
+    {
+      "company": {
+        "companyNumber": "00445790",
+        "registeredName": "TESCO PLC",
+        "status": "active",
+        "type": "plc"
+      },
+      "evidence": {
+        "retrievedAt": "2026-06-21T19:42:20.317Z",
+        "sourceUri": "https://api.company-information.service.gov.uk"
+      },
+      "sections": {
+        "charges": {
+          "evidenceSourceCount": 1,
+          "itemCount": 9,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/charges?items_per_page=1",
+          "status": "complete"
+        },
+        "filings": {
+          "evidenceSourceCount": 1,
+          "itemCount": 8350,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/filing-history?items_per_page=1",
+          "status": "complete"
+        },
+        "insolvency": {
+          "caseCount": 0,
+          "evidenceSourceCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/insolvency",
+          "status": "not_available"
+        },
+        "officers": {
+          "evidenceSourceCount": 1,
+          "itemCount": 74,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/officers?items_per_page=1",
+          "status": "complete"
+        },
+        "profile": {
+          "evidenceSourceCount": 1,
+          "factCount": 6,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00445790",
+          "status": "complete"
+        },
+        "pscs": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/persons-with-significant-control?items_per_page=1",
+          "status": "complete"
+        }
+      },
+      "selection": {
+        "eligibilityPool": "ftse350-public-company",
+        "hash": "10d4a5fbc0c7b24c2b2045048199b793fc0ab93f509f1c52b8eb5ea6fc55d105",
+        "rank": 1,
+        "selectionStatus": "selected"
+      }
+    },
+    {
+      "company": {
+        "companyNumber": "01470151",
+        "registeredName": "BAE SYSTEMS PLC",
+        "status": "active",
+        "type": "plc"
+      },
+      "evidence": {
+        "retrievedAt": "2026-06-21T19:42:20.664Z",
+        "sourceUri": "https://api.company-information.service.gov.uk"
+      },
+      "sections": {
+        "charges": {
+          "evidenceSourceCount": 1,
+          "itemCount": 51,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/charges?items_per_page=1",
+          "status": "complete"
+        },
+        "filings": {
+          "evidenceSourceCount": 1,
+          "itemCount": 3918,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/filing-history?items_per_page=1",
+          "status": "complete"
+        },
+        "insolvency": {
+          "caseCount": 0,
+          "evidenceSourceCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/insolvency",
+          "status": "not_available"
+        },
+        "officers": {
+          "evidenceSourceCount": 1,
+          "itemCount": 73,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/officers?items_per_page=1",
+          "status": "complete"
+        },
+        "profile": {
+          "evidenceSourceCount": 1,
+          "factCount": 6,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/01470151",
+          "status": "complete"
+        },
+        "pscs": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/persons-with-significant-control?items_per_page=1",
+          "status": "complete"
+        }
+      },
+      "selection": {
+        "eligibilityPool": "ftse350-public-company",
+        "hash": "1cba60eb62158b04e37ef6f226ae70e284329fb349c42bdc2b6ad79c23431e09",
+        "rank": 2,
+        "selectionStatus": "selected"
+      }
+    },
+    {
+      "company": {
+        "companyNumber": "00023307",
+        "registeredName": "DIAGEO PLC",
+        "status": "active",
+        "type": "plc"
+      },
+      "evidence": {
+        "retrievedAt": "2026-06-21T19:42:20.955Z",
+        "sourceUri": "https://api.company-information.service.gov.uk"
+      },
+      "sections": {
+        "charges": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/charges?items_per_page=1",
+          "status": "complete"
+        },
+        "filings": {
+          "evidenceSourceCount": 1,
+          "itemCount": 3203,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/filing-history?items_per_page=1",
+          "status": "complete"
+        },
+        "insolvency": {
+          "caseCount": 0,
+          "evidenceSourceCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/insolvency",
+          "status": "not_available"
+        },
+        "officers": {
+          "evidenceSourceCount": 1,
+          "itemCount": 74,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/officers?items_per_page=1",
+          "status": "complete"
+        },
+        "profile": {
+          "evidenceSourceCount": 1,
+          "factCount": 6,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00023307",
+          "status": "complete"
+        },
+        "pscs": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/persons-with-significant-control?items_per_page=1",
+          "status": "complete"
+        }
+      },
+      "selection": {
+        "eligibilityPool": "ftse350-public-company",
+        "hash": "2db0725f7fbf4148fc1f7aaa7c7a7aca1b988c90be6f859a91525d43e1d9d1d3",
+        "rank": 3,
+        "selectionStatus": "selected"
+      }
+    },
+    {
+      "company": {
+        "companyNumber": "00077536",
+        "registeredName": "RELX PLC",
+        "status": "active",
+        "type": "plc"
+      },
+      "evidence": {
+        "retrievedAt": "2026-06-21T19:42:21.245Z",
+        "sourceUri": "https://api.company-information.service.gov.uk"
+      },
+      "sections": {
+        "charges": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00077536/charges?items_per_page=1",
+          "status": "complete"
+        },
+        "filings": {
+          "evidenceSourceCount": 1,
+          "itemCount": 3209,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00077536/filing-history?items_per_page=1",
+          "status": "complete"
+        },
+        "insolvency": {
+          "caseCount": 0,
+          "evidenceSourceCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00077536/insolvency",
+          "status": "not_available"
+        },
+        "officers": {
+          "evidenceSourceCount": 1,
+          "itemCount": 59,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00077536/officers?items_per_page=1",
+          "status": "complete"
+        },
+        "profile": {
+          "evidenceSourceCount": 1,
+          "factCount": 6,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00077536",
+          "status": "complete"
+        },
+        "pscs": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/00077536/persons-with-significant-control?items_per_page=1",
+          "status": "complete"
+        }
+      },
+      "selection": {
+        "eligibilityPool": "ftse350-public-company",
+        "hash": "34e05682f2a6161d0f56d40e88a62087a0e4e6f5d846d2d0309fa5c5ca7d9d32",
+        "rank": 4,
+        "selectionStatus": "selected"
+      }
+    },
+    {
+      "company": {
+        "companyNumber": "04366849",
+        "registeredName": "SHELL PLC",
+        "status": "active",
+        "type": "plc"
+      },
+      "evidence": {
+        "retrievedAt": "2026-06-21T19:42:21.491Z",
+        "sourceUri": "https://api.company-information.service.gov.uk"
+      },
+      "sections": {
+        "charges": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/04366849/charges?items_per_page=1",
+          "status": "complete"
+        },
+        "filings": {
+          "evidenceSourceCount": 1,
+          "itemCount": 1163,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/04366849/filing-history?items_per_page=1",
+          "status": "complete"
+        },
+        "insolvency": {
+          "caseCount": 0,
+          "evidenceSourceCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/04366849/insolvency",
+          "status": "not_available"
+        },
+        "officers": {
+          "evidenceSourceCount": 1,
+          "itemCount": 66,
+          "sampledItemCount": 1,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/04366849/officers?items_per_page=1",
+          "status": "complete"
+        },
+        "profile": {
+          "evidenceSourceCount": 1,
+          "factCount": 6,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/04366849",
+          "status": "complete"
+        },
+        "pscs": {
+          "evidenceSourceCount": 1,
+          "itemCount": 0,
+          "sampledItemCount": 0,
+          "sourceUri": "https://api.company-information.service.gov.uk/company/04366849/persons-with-significant-control?items_per_page=1",
+          "status": "complete"
+        }
+      },
+      "selection": {
+        "eligibilityPool": "ftse350-public-company",
+        "hash": "65314ec580294075c05fe98d60838cdc9624a676894e90c2d004df5de5284a5b",
+        "rank": 5,
+        "selectionStatus": "selected"
+      }
+    }
+  ]
+}

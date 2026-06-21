@@ -1,0 +1,65 @@
+{
+  "algorithm": {
+    "hash": "sha256",
+    "input": "seed + \"\\0\" + canonicalCompanyNumber",
+    "name": "company-dossier-random-picker",
+    "sort": "hash ascending, companyNumber ascending",
+    "version": "1.0.0"
+  },
+  "policyHash": "6ca5484131fe65a6c0e34710c08928810a645a579e6cbe6e1ff688095c385cfc",
+  "rejectedRecords": [],
+  "schemaVersion": "1.0.0",
+  "seed": "ftse350-public-demo-v1",
+  "selectedRecords": [
+    {
+      "companyNumber": "00445790",
+      "eligibilityPool": "ftse350-public-company",
+      "hash": "10d4a5fbc0c7b24c2b2045048199b793fc0ab93f509f1c52b8eb5ea6fc55d105",
+      "rank": 1,
+      "selectionStatus": "selected",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "01470151",
+      "eligibilityPool": "ftse350-public-company",
+      "hash": "1cba60eb62158b04e37ef6f226ae70e284329fb349c42bdc2b6ad79c23431e09",
+      "rank": 2,
+      "selectionStatus": "selected",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00023307",
+      "eligibilityPool": "ftse350-public-company",
+      "hash": "2db0725f7fbf4148fc1f7aaa7c7a7aca1b988c90be6f859a91525d43e1d9d1d3",
+      "rank": 3,
+      "selectionStatus": "selected",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00077536",
+      "eligibilityPool": "ftse350-public-company",
+      "hash": "34e05682f2a6161d0f56d40e88a62087a0e4e6f5d846d2d0309fa5c5ca7d9d32",
+      "rank": 4,
+      "selectionStatus": "selected",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "04366849",
+      "eligibilityPool": "ftse350-public-company",
+      "hash": "65314ec580294075c05fe98d60838cdc9624a676894e90c2d004df5de5284a5b",
+      "rank": 5,
+      "selectionStatus": "selected",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    }
+  ],
+  "snapshot": {
+    "date": "2026-06-21",
+    "sha256": "c082660492d1bfb06ac164700d1187ed1d47dc1e940d356ff9f622546ef03d25",
+    "uri": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+  }
+}

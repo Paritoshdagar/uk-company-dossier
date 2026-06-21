@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshotDate": "2026-06-21",
+  "snapshotSha256": "c082660492d1bfb06ac164700d1187ed1d47dc1e940d356ff9f622546ef03d25",
+  "snapshotUri": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table",
+  "candidates": [
+    {
+      "companyNumber": "00445790",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00617987",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00102498",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00041424",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "04366849",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "02723534",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "03888792",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "04031152",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00077536",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "01470151",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    },
+    {
+      "companyNumber": "00023307",
+      "companyStatus": "active",
+      "eligibilityPool": "ftse350-public-company",
+      "snapshotDate": "2026-06-21",
+      "snapshotSource": "https://www.londonstockexchange.com/indices/ftse-350/constituents/table"
+    }
+  ]
+}

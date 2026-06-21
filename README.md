@@ -208,6 +208,8 @@ Demonstration companies were selected programmatically by this repository's docu
 
 The random-selection policy lives in [examples/random-selection/README.md](examples/random-selection/README.md). Example fixture guidance lives in [examples/fixtures/README.md](examples/fixtures/README.md).
 
+For a compact live demonstration on randomly selected FTSE 350-style public-company records, see [examples/ftse350/README.md](examples/ftse350/README.md). The committed summaries intentionally avoid raw Companies House payloads and personal-detail rows.
+
 ## Data attribution
 
 The software queries Companies House public-register services, but this repository does not own Companies House data. Generated outputs should preserve provider attribution, source URI, retrieval time, and the non-affiliation statement embedded in the dossier contract.
