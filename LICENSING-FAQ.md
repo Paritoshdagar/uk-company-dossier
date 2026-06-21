@@ -18,7 +18,11 @@ Commercial use requires separately signed written permission from the copyright 
 
 ## May I contribute?
 
-All external repository contributions are frozen until a UK intellectual-property solicitor has reviewed and approved the contributor agreement required for dual licensing. This includes code, scripts, configuration, documentation, examples, patches, and other copyrightable or authored material. Bug reports and use-case proposals remain welcome under [CONTRIBUTING.md](CONTRIBUTING.md), but while the freeze applies they must not include patches or substantial authored replacement content.
+Yes. Issues and focused pull requests are welcome.
+
+Because this project is source-available under a non-commercial public licence and may also need separate commercial licences, some contributions may require contributor-agreement or licensing confirmation before they can be merged. This protects the contributor, the maintainer, and future users.
+
+Please submit only work you created or have the right to contribute, and do not include credentials, private company information, sensitive personal data, confidential client material, or raw non-public documents. See [CONTRIBUTING.md](CONTRIBUTING.md) for the practical contribution workflow.
 
 ## Is this legal advice?
 

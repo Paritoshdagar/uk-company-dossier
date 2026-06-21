@@ -232,11 +232,29 @@ Before redistributing any generated data, review [DATA-LICENSING.md](DATA-LICENS
 - Keep generated outputs under review before publishing them.
 - Run `npm run docs:links`, `npm run docs:mermaid`, and the release verification script before publishing changes.
 
-## Commercial licensing
+## Contributing
 
-The public licence is non-commercial. Commercial use requires a separate written licence before use in a business, paid product, paid client service, internal for-profit workflow, hosted service, paid support arrangement, or commercial consultancy workflow.
+Ideas, bug reports, practical use cases, and focused pull requests are welcome.
 
-Open a public enquiry with the [commercial licensing issue template](https://github.com/Paritoshdagar/uk-company-dossier/issues/new?template=commercial-licensing.yml) only for initial contact. A separate signed written licence is required before any commercial use.
+If you see a workflow that could be clearer, safer, or more useful, please open an issue. If you already have a solution, open a pull request with the context, the change, and how you tested it.
+
+Please do not include credentials, private company information, sensitive personal data, confidential client material, or raw non-public documents in issues or pull requests.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
+
+## Licence and commercial licensing
+
+This repository is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+In plain terms:
+
+- welcome: personal learning, research, experimentation, education, and non-commercial community use;
+- not granted by the public licence: paid client work, internal use by a for-profit organisation, paid products or services, hosted services, paid support, or commercial consultancy workflows;
+- required for commercial use: separate written permission before use.
+
+The legally controlling text is [LICENSE](LICENSE). Summaries in this README, [COMMERCIAL.md](COMMERCIAL.md), or [LICENSING-FAQ.md](LICENSING-FAQ.md) do not replace or modify the licence.
+
+For initial non-confidential contact about commercial licensing, open the [commercial licensing issue template](https://github.com/Paritoshdagar/uk-company-dossier/issues/new?template=commercial-licensing.yml). A separate signed written licence is required before any commercial use.
 
 ## Development checks
 
