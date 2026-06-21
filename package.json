@@ -9,8 +9,11 @@
     "node": ">=22 <23"
   },
   "files": [
+    "NOTICE.md",
+    "THIRD-PARTY-NOTICES.md",
     "bin/dossier.mjs",
     "dist",
+    "schemas",
     "scripts/unavailable.mjs"
   ],
   "main": "./dist/cli/main.js",
@@ -20,7 +23,17 @@
       "types": "./dist/cli/main.d.ts",
       "import": "./dist/cli/main.js"
     },
-    "./package.json": "./package.json"
+    "./contracts/company-evidence": {
+      "types": "./dist/contracts/company-evidence.d.ts",
+      "import": "./dist/contracts/company-evidence.js"
+    },
+    "./contracts/errors": {
+      "types": "./dist/contracts/errors.d.ts",
+      "import": "./dist/contracts/errors.js"
+    },
+    "./package.json": "./package.json",
+    "./schemas/VERSION": "./schemas/VERSION",
+    "./schemas/company-evidence.schema.json": "./schemas/company-evidence.schema.json"
   },
   "bin": {
     "dossier": "./bin/dossier.mjs"
@@ -32,7 +45,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js bin/dossier.mjs scripts/unavailable.mjs \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js bin/dossier.mjs scripts/unavailable.mjs \"schemas/**/*.json\" \"src/**/*.ts\" \"tests/**/*.ts\" \"tests/fixtures/**/*.json\"",
     "doctor": "npm run cli -- doctor",
     "cli": "node --enable-source-maps dist/cli/main.js",
     "mcp": "node scripts/unavailable.mjs \"MCP service\"",

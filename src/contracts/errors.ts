@@ -30,7 +30,7 @@ export interface SerializedDossierError {
 
 const redactionText = "[REDACTED]";
 const authorizationPattern =
-  /\b(authorization\s*[:=]\s*(?:Bearer|Basic)\s+)[^\s,;&"'}]+/giu;
+  /\b(authorization\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;&"'}]+\s+[^\s,;&"'}]+|[^\s,;&"'}]+)/giu;
 const apiKeyQueryPattern =
   /([?&](?:api[-_]?key|apikey|x-api-key)=)[^&#\s"']+/giu;
 const sensitiveFieldPattern =

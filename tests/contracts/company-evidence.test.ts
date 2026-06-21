@@ -110,6 +110,16 @@ function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+function nestedArray(depth: number): unknown {
+  let value: unknown = "leaf";
+
+  for (let index = 0; index < depth; index += 1) {
+    value = [value];
+  }
+
+  return value;
+}
+
 const validEvidenceRef = {
   sourceUri: "https://api.company-information.service.gov.uk/company/00000006",
   retrievedAt: "2026-06-21T10:29:00Z",
@@ -154,6 +164,12 @@ describe("company evidence contract fixtures", () => {
     const ajv = createAjv();
     const jsonSchema = (await loadJsonFile(schemaPath)) as AnySchema;
 
+    expect(
+      (jsonSchema as { readonly $id?: unknown }).$id,
+      "schema $id should be pinned to the v1.0.0 release path",
+    ).toBe(
+      "https://raw.githubusercontent.com/Paritoshdagar/uk-company-dossier/v1.0.0/schemas/company-evidence.schema.json",
+    );
     expect(ajv.validateSchema(jsonSchema), ajv.errorsText()).toBe(true);
   });
 
@@ -223,6 +239,16 @@ describe("company evidence Zod contract", () => {
         sourceUri:
           "https://api.company-information.service.gov.uk/company/currency/£",
       },
+      {
+        ...validEvidenceRef,
+        sourceUri:
+          "https://user:pass@api.company-information.service.gov.uk/company/1",
+      },
+      {
+        ...validEvidenceRef,
+        sourceUri:
+          "https://api.company-information.service.gov.uk/company/1?access_token=value",
+      },
       { ...validEvidenceRef, retrievedAt: "2026-06-21 10:29:00" },
       { ...validEvidenceRef, payloadSha256: "A".repeat(64) },
       { ...validEvidenceRef, documentId: " " },
@@ -260,6 +286,8 @@ describe("company evidence Zod contract", () => {
   });
 
   it("keeps fact values JSON-compatible", () => {
+    const cyclicObject: Record<string, unknown> = {};
+    cyclicObject.self = cyclicObject;
     const validValues: unknown[] = [
       null,
       true,
@@ -267,6 +295,8 @@ describe("company evidence Zod contract", () => {
       "text",
       ["nested", 1, false, null],
       { nested: { array: [1, "two", null] } },
+      JSON.parse('{"parsed":["json",1,true,null]}') as unknown,
+      nestedArray(8),
     ];
 
     for (const value of validValues) {
@@ -276,11 +306,25 @@ describe("company evidence Zod contract", () => {
       ).toBe(true);
     }
 
-    expect(jsonValueSchema.safeParse(Number.POSITIVE_INFINITY).success).toBe(
-      false,
-    );
-    expect(jsonValueSchema.safeParse(undefined).success).toBe(false);
-    expect(jsonValueSchema.safeParse(() => "not json").success).toBe(false);
+    expect(() => jsonValueSchema.safeParse(cyclicObject)).not.toThrow();
+
+    for (const invalid of [
+      Number.POSITIVE_INFINITY,
+      Number.NaN,
+      undefined,
+      () => "not json",
+      Symbol("not json"),
+      1n,
+      new Date("2026-06-21T10:30:00Z"),
+      new Map([["key", "value"]]),
+      cyclicObject,
+      nestedArray(65),
+    ]) {
+      expect(
+        jsonValueSchema.safeParse(invalid).success,
+        `expected non-JSON value ${Object.prototype.toString.call(invalid)} to fail`,
+      ).toBe(false);
+    }
   });
 
   it("preserves status semantics so incomplete sections cannot look complete", () => {
@@ -420,7 +464,7 @@ describe("company evidence Zod contract", () => {
 
     setFirstEvidenceSourceUri(
       encodedDossier,
-      "https://api.company-information.service.gov.uk/company/has%20space?currency=%C2%A3#evidence",
+      "https://vendor.example/company/has%20space?document=00000006&currency=%C2%A3#evidence",
     );
     encodedDossier.sourceAttribution.sourceUri =
       "https://api.company-information.service.gov.uk?company=00000006&currency=%C2%A3#source";
@@ -430,16 +474,75 @@ describe("company evidence Zod contract", () => {
       true,
     );
   });
+
+  it("matches JSON Schema URI parity by rejecting userinfo and credential query parameters", async () => {
+    const validator = await loadDossierJsonValidator();
+    const fixture = companyDossierSchema.parse(
+      await loadJsonFile(
+        join(validFixturesRoot, "complete-source-dossier.json"),
+      ),
+    );
+    const credentialUriCases = [
+      {
+        description: "evidence URI with userinfo",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://user:pass@vendor.example/source.json",
+          );
+        },
+      },
+      {
+        description: "evidence URI with token query parameter",
+        mutate: (dossier: CompanyDossier) => {
+          setFirstEvidenceSourceUri(
+            dossier,
+            "https://vendor.example/source.json?token=value",
+          );
+        },
+      },
+      {
+        description: "official URI with access token query parameter",
+        mutate: (dossier: CompanyDossier) => {
+          dossier.sourceAttribution.sourceUri =
+            "https://api.company-information.service.gov.uk/?access_token=value";
+        },
+      },
+      {
+        description: "official URI with client secret query parameter",
+        mutate: (dossier: CompanyDossier) => {
+          dossier.sourceAttribution.licenceUri =
+            "https://developer.company-information.service.gov.uk/developer-guidelines?client_secret=value";
+        },
+      },
+    ];
+
+    for (const { description, mutate } of credentialUriCases) {
+      const dossier = cloneJson(fixture);
+
+      mutate(dossier);
+
+      expect(
+        companyDossierSchema.safeParse(dossier).success,
+        `${description} should fail Zod`,
+      ).toBe(false);
+      expect(validator(dossier), `${description} should fail Ajv`).toBe(false);
+    }
+  });
 });
 
 describe("safe dossier errors", () => {
   it("redacts authorization, API-key, and token-shaped secrets from text", () => {
     const bearerValue = ["bearer", "credential", "example"].join("-");
     const basicValue = ["basic", "credential", "example"].join("-");
+    const apiKeyAuthorizationValue = ["api", "key", "credential"].join("-");
+    const tokenAuthorizationValue = ["token", "credential"].join("-");
     const apiKeyValue = ["api", "key", "example"].join("-");
     const tokenValue = ["token", "example"].join("-");
     const authorizationHeader = ["Authorization", "Bearer"].join(": ");
     const basicAssignment = ["authorization", "Basic"].join("=");
+    const apiKeyAuthorizationHeader = ["Authorization", "ApiKey"].join(": ");
+    const tokenAuthorizationHeader = ["Authorization", "Token"].join(": ");
     const apiKeyQuery = ["?api", "key"].join("_");
     const tokenAssignment = ["token", ""].join(": ");
 
@@ -447,6 +550,12 @@ describe("safe dossier errors", () => {
       [
         `${authorizationHeader} ${bearerValue}`,
         `${basicAssignment} ${basicValue}`,
+        `${apiKeyAuthorizationHeader} ${apiKeyAuthorizationValue}`,
+        `${tokenAuthorizationHeader} ${tokenAuthorizationValue}`,
+        JSON.stringify({
+          Authorization: `ApiKey ${apiKeyAuthorizationValue}`,
+          authorization: `Token ${tokenAuthorizationValue}`,
+        }),
         `${apiKeyQuery}=${apiKeyValue}&company=00000006`,
         `${tokenAssignment}${tokenValue}`,
       ].join(" "),
@@ -454,6 +563,10 @@ describe("safe dossier errors", () => {
 
     expect(redacted).not.toContain(bearerValue);
     expect(redacted).not.toContain(basicValue);
+    expect(redacted).not.toContain(apiKeyAuthorizationValue);
+    expect(redacted).not.toContain(tokenAuthorizationValue);
+    expect(redacted).not.toContain(`ApiKey ${apiKeyAuthorizationValue}`);
+    expect(redacted).not.toContain(`Token ${tokenAuthorizationValue}`);
     expect(redacted).not.toContain(apiKeyValue);
     expect(redacted).not.toContain(tokenValue);
     expect(redacted).toContain("[REDACTED]");

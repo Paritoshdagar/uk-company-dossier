@@ -11,6 +11,10 @@ const strictUriCharacterPattern = /^[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*$/u;
 const invalidPercentEncodingPattern = /%(?![0-9A-Fa-f]{2})/u;
 const officialCompaniesHouseUriPattern =
   /^https:\/\/(?:(?:api|developer|find-and-update)\.company-information\.service\.gov\.uk|www\.gov\.uk)(?:[/?#]|$)/;
+const sensitiveCredentialQueryParameterPattern =
+  /^(?:api[-_]?key|apikey|x-api-key|api[-_]?token|apitoken|access[-_]?token|accesstoken|refresh[-_]?token|refreshtoken|id[-_]?token|idtoken|token|secret|password|credential|client_secret|clientsecret|private_key|privatekey|authorization)$/iu;
+
+export const MAX_JSON_VALUE_DEPTH = 64;
 
 export type JsonValue =
   | null
@@ -19,6 +23,20 @@ export type JsonValue =
   | string
   | JsonValue[]
   | { [key: string]: JsonValue };
+
+function hasCredentialBearingUriParts(url: URL): boolean {
+  if (url.username.length > 0 || url.password.length > 0) {
+    return true;
+  }
+
+  for (const queryKey of url.searchParams.keys()) {
+    if (sensitiveCredentialQueryParameterPattern.test(queryKey)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 function isStrictHttpsUri(value: string): boolean {
   if (!value.startsWith("https://")) {
@@ -34,7 +52,9 @@ function isStrictHttpsUri(value: string): boolean {
   }
 
   try {
-    return new URL(value).protocol === "https:";
+    const url = new URL(value);
+
+    return url.protocol === "https:" && !hasCredentialBearingUriParts(url);
   } catch {
     return false;
   }
@@ -111,16 +131,81 @@ export const evidenceRefSchema = z
 
 export type EvidenceRef = z.infer<typeof evidenceRefSchema>;
 
-export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
-  z.union([
-    z.null(),
-    z.boolean(),
-    z.number(),
-    z.string(),
-    z.array(jsonValueSchema),
-    z.record(z.string(), jsonValueSchema),
-  ]),
-);
+function isPlainJsonObject(value: object): value is Record<string, unknown> {
+  const prototype: unknown = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isJsonCompatibleValue(
+  value: unknown,
+  depth = 0,
+  ancestors?: WeakSet<object>,
+): value is JsonValue {
+  const activeAncestors = ancestors ?? new WeakSet();
+
+  if (depth > MAX_JSON_VALUE_DEPTH) {
+    return false;
+  }
+
+  if (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "string"
+  ) {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value);
+  }
+
+  if (typeof value !== "object") {
+    return false;
+  }
+
+  if (activeAncestors.has(value)) {
+    return false;
+  }
+
+  activeAncestors.add(value);
+
+  if (Array.isArray(value)) {
+    const isValidArray = value.every((item) =>
+      isJsonCompatibleValue(item, depth + 1, activeAncestors),
+    );
+
+    activeAncestors.delete(value);
+
+    return isValidArray;
+  }
+
+  if (!isPlainJsonObject(value)) {
+    activeAncestors.delete(value);
+
+    return false;
+  }
+
+  try {
+    const isValidObject = Object.values(value).every((item) =>
+      isJsonCompatibleValue(item, depth + 1, activeAncestors),
+    );
+
+    activeAncestors.delete(value);
+
+    return isValidObject;
+  } catch {
+    activeAncestors.delete(value);
+
+    return false;
+  }
+}
+
+export const jsonValueSchema: z.ZodType<JsonValue> = z
+  .unknown()
+  .refine((value): value is JsonValue => isJsonCompatibleValue(value), {
+    message: "Expected JSON-compatible value with maximum depth 64.",
+  });
 
 export function createFactSchema<TValueSchema extends z.ZodType<JsonValue>>(
   valueSchema: TValueSchema,
