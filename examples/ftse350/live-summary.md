@@ -2,7 +2,7 @@
 
 Demonstration companies were selected programmatically by this repository's documented random-company picker from predeclared Companies House eligibility pools. The author did not choose or rank the selected companies. Inclusion does not imply endorsement, criticism, concern, affiliation, or preference. Public-register information is shown solely to demonstrate software behaviour, may change, and must be verified at Companies House before use.
 
-Generated at: 2026-06-21T19:42:21.491Z
+Generated at: 2026-06-21T20:10:05.257Z
 
 Source: https://www.londonstockexchange.com/indices/ftse-350/constituents/table
 

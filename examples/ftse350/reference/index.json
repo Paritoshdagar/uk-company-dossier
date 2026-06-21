@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-06-21T20:10:05.257Z",
+  "disclaimer": "Demonstration companies were selected programmatically by this repository's documented random-company picker from predeclared Companies House eligibility pools. The author did not choose or rank the selected companies. Inclusion does not imply endorsement, criticism, concern, affiliation, or preference. Public-register information is shown solely to demonstrate software behaviour, may change, and must be verified at Companies House before use.",
+  "artifacts": {
+    "json": "reference-examples.json",
+    "markdown": "reference-examples.md"
+  },
+  "companies": [
+    {
+      "companyNumber": "00445790",
+      "registeredName": "TESCO PLC"
+    },
+    {
+      "companyNumber": "01470151",
+      "registeredName": "BAE SYSTEMS PLC"
+    },
+    {
+      "companyNumber": "00023307",
+      "registeredName": "DIAGEO PLC"
+    },
+    {
+      "companyNumber": "00077536",
+      "registeredName": "RELX PLC"
+    },
+    {
+      "companyNumber": "04366849",
+      "registeredName": "SHELL PLC"
+    }
+  ]
+}

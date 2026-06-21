@@ -29,10 +29,11 @@ If `.env` already exists, edit it instead of recreating it.
 - `selection-manifest.json` records the deterministic random selection.
 - `live-summary.json` records safe live-summary output from the selected companies.
 - `live-summary.md` is the same summary in a non-technical table.
+- `reference/` contains compact evidence-linked examples for profile, filing, officer, PSC, charge, and insolvency-style endpoint availability records.
 
 The live summaries include company number, registered name, company status, section availability, profile fact counts, list total counts, and evidence-source counts. They do not include officer names, PSC names, filing rows, addresses, raw payloads, API keys, or Authorization headers.
 
-To generate a full evidence-linked dossier for one selected company, run:
+The reference examples are deliberately small reader aids, not full dossiers or raw Companies House payload dumps. To generate a full evidence-linked dossier for one selected company, run:
 
 ```bash
 npm run cli -- 00445790 --format markdown --output out/ftse350-dossier.md

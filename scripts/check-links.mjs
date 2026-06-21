@@ -17,6 +17,7 @@ const requiredFiles = [
   "docs/use-cases/technical-evidence-integration.md",
   "examples/fixtures/README.md",
   "examples/ftse350/README.md",
+  "examples/ftse350/reference/README.md",
   "examples/non-technical/README.md",
   "examples/random-selection/README.md",
   "examples/technical/README.md",

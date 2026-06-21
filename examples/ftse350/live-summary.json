@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-06-21T19:42:21.491Z",
+  "generatedAt": "2026-06-21T20:10:05.257Z",
   "disclaimer": "Demonstration companies were selected programmatically by this repository's documented random-company picker from predeclared Companies House eligibility pools. The author did not choose or rank the selected companies. Inclusion does not imply endorsement, criticism, concern, affiliation, or preference. Public-register information is shown solely to demonstrate software behaviour, may change, and must be verified at Companies House before use.",
   "seed": "ftse350-public-demo-v1",
   "sources": {
@@ -17,7 +17,7 @@
         "type": "plc"
       },
       "evidence": {
-        "retrievedAt": "2026-06-21T19:42:20.317Z",
+        "retrievedAt": "2026-06-21T20:10:04.258Z",
         "sourceUri": "https://api.company-information.service.gov.uk"
       },
       "sections": {
@@ -77,7 +77,7 @@
         "type": "plc"
       },
       "evidence": {
-        "retrievedAt": "2026-06-21T19:42:20.664Z",
+        "retrievedAt": "2026-06-21T20:10:04.544Z",
         "sourceUri": "https://api.company-information.service.gov.uk"
       },
       "sections": {
@@ -137,7 +137,7 @@
         "type": "plc"
       },
       "evidence": {
-        "retrievedAt": "2026-06-21T19:42:20.955Z",
+        "retrievedAt": "2026-06-21T20:10:04.798Z",
         "sourceUri": "https://api.company-information.service.gov.uk"
       },
       "sections": {
@@ -197,7 +197,7 @@
         "type": "plc"
       },
       "evidence": {
-        "retrievedAt": "2026-06-21T19:42:21.245Z",
+        "retrievedAt": "2026-06-21T20:10:05.063Z",
         "sourceUri": "https://api.company-information.service.gov.uk"
       },
       "sections": {
@@ -257,7 +257,7 @@
         "type": "plc"
       },
       "evidence": {
-        "retrievedAt": "2026-06-21T19:42:21.491Z",
+        "retrievedAt": "2026-06-21T20:10:05.257Z",
         "sourceUri": "https://api.company-information.service.gov.uk"
       },
       "sections": {

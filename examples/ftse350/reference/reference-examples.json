@@ -1,0 +1,416 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-06-21T20:10:05.257Z",
+  "disclaimer": "Demonstration companies were selected programmatically by this repository's documented random-company picker from predeclared Companies House eligibility pools. The author did not choose or rank the selected companies. Inclusion does not imply endorsement, criticism, concern, affiliation, or preference. Public-register information is shown solely to demonstrate software behaviour, may change, and must be verified at Companies House before use.",
+  "source": {
+    "companiesHouseApiBaseUri": "https://api.company-information.service.gov.uk",
+    "selectionManifest": "selection-manifest.json"
+  },
+  "examplesByType": {
+    "charges": [
+      {
+        "company": {
+          "companyNumber": "00445790",
+          "registeredName": "TESCO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "7284e82c2226e9c824ae39b3d0e53a1aaea57ab8a6a666a915b073cfd5205270",
+            "retrievedAt": "2026-06-21T20:10:05.501Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/charges?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "classificationType": "charge-description",
+          "createdOn": "2009-11-04",
+          "deliveredOn": "2009-11-06",
+          "personsEntitledCount": 1,
+          "status": "outstanding"
+        },
+        "type": "charges"
+      },
+      {
+        "company": {
+          "companyNumber": "01470151",
+          "registeredName": "BAE SYSTEMS PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "4f8670655ca866ea98927d8338bc6e9682afa79ed70f53a7f3cbf9dd33f838ad",
+            "retrievedAt": "2026-06-21T20:10:05.705Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/charges?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "chargeCode": "014701510051",
+          "classificationType": "charge-description",
+          "createdOn": "2022-10-26",
+          "deliveredOn": "2022-11-04",
+          "personsEntitledCount": 1,
+          "status": "outstanding"
+        },
+        "type": "charges"
+      },
+      {
+        "company": {
+          "companyNumber": "00023307",
+          "registeredName": "DIAGEO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "598de848f11e2b50fb4e44ce6dcc63521771735a84083be9db0d823f02338197",
+            "retrievedAt": "2026-06-21T20:10:05.912Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/charges?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "availability": "complete",
+          "sampledItems": 0,
+          "statusCode": 200,
+          "totalResults": 0
+        },
+        "note": "No charge items were returned in the sampled page.",
+        "type": "charges"
+      }
+    ],
+    "filings": [
+      {
+        "company": {
+          "companyNumber": "00445790",
+          "registeredName": "TESCO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "047d0893248f514c2128b232a3003ee1699ad34b9787d828c2942ba9ffc953a4",
+            "retrievedAt": "2026-06-21T20:10:05.383Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/filing-history?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "category": "capital",
+          "date": "2026-06-10",
+          "description": "capital-cancellation-shares",
+          "paperFiled": true,
+          "transactionId": "MzUyNDY1MTExNmFkaXF6a2N4",
+          "type": "SH06"
+        },
+        "type": "filings"
+      },
+      {
+        "company": {
+          "companyNumber": "01470151",
+          "registeredName": "BAE SYSTEMS PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "8cdfb8fa70beb3afe76dcee1171855769121732505f7401328619a0d36526117",
+            "retrievedAt": "2026-06-21T20:10:05.599Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/filing-history?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "category": "capital",
+          "date": "2026-06-17",
+          "description": "capital-return-purchase-own-shares",
+          "paperFiled": true,
+          "transactionId": "MzUyNTkyOTY5NWFkaXF6a2N4",
+          "type": "SH03"
+        },
+        "type": "filings"
+      },
+      {
+        "company": {
+          "companyNumber": "00023307",
+          "registeredName": "DIAGEO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "c6e9ce6563ec194fa887f486246a092cf1796616e1fb6fee80c2991ec94daf7c",
+            "retrievedAt": "2026-06-21T20:10:05.800Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/filing-history?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "category": "miscellaneous",
+          "date": "2026-05-27",
+          "description": "legacy",
+          "transactionId": "MzUyMzAyOTQwOWFkaXF6a2N4",
+          "type": "RP01SH01"
+        },
+        "type": "filings"
+      }
+    ],
+    "insolvency": [
+      {
+        "company": {
+          "companyNumber": "00445790",
+          "registeredName": "TESCO PLC"
+        },
+        "evidence": [
+          {
+            "retrievedAt": "2026-06-21T20:10:05.522Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/insolvency",
+            "statusCode": 404
+          }
+        ],
+        "fields": {
+          "availability": "not_available",
+          "caseCount": 0,
+          "statusCode": 404
+        },
+        "note": "The insolvency endpoint returned 404 at generation time, so this is an availability example rather than an insolvency case.",
+        "type": "insolvency"
+      },
+      {
+        "company": {
+          "companyNumber": "01470151",
+          "registeredName": "BAE SYSTEMS PLC"
+        },
+        "evidence": [
+          {
+            "retrievedAt": "2026-06-21T20:10:05.732Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/insolvency",
+            "statusCode": 404
+          }
+        ],
+        "fields": {
+          "availability": "not_available",
+          "caseCount": 0,
+          "statusCode": 404
+        },
+        "note": "The insolvency endpoint returned 404 at generation time, so this is an availability example rather than an insolvency case.",
+        "type": "insolvency"
+      },
+      {
+        "company": {
+          "companyNumber": "00023307",
+          "registeredName": "DIAGEO PLC"
+        },
+        "evidence": [
+          {
+            "retrievedAt": "2026-06-21T20:10:05.933Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/insolvency",
+            "statusCode": 404
+          }
+        ],
+        "fields": {
+          "availability": "not_available",
+          "caseCount": 0,
+          "statusCode": 404
+        },
+        "note": "The insolvency endpoint returned 404 at generation time, so this is an availability example rather than an insolvency case.",
+        "type": "insolvency"
+      }
+    ],
+    "officers": [
+      {
+        "company": {
+          "companyNumber": "00445790",
+          "registeredName": "TESCO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "65e4aa5408ea958f437c51a6cbc318d722284f263593fe91f5ca0162ea4494b8",
+            "retrievedAt": "2026-06-21T20:10:05.416Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/officers?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "appointedOn": "2025-04-14",
+          "name": "TAYLOR, Christopher Jon",
+          "officerRole": "secretary"
+        },
+        "note": "Officer names and appointments are public-register information.",
+        "type": "officers"
+      },
+      {
+        "company": {
+          "companyNumber": "01470151",
+          "registeredName": "BAE SYSTEMS PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "32d3f202356b8821cde24f2249e71ed75cb1285fbd7f8690036819aea5c07364",
+            "retrievedAt": "2026-06-21T20:10:05.632Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/officers?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "appointedOn": "2024-05-09",
+          "name": "CLARKE, Anthony",
+          "officerRole": "secretary"
+        },
+        "note": "Officer names and appointments are public-register information.",
+        "type": "officers"
+      },
+      {
+        "company": {
+          "companyNumber": "00023307",
+          "registeredName": "DIAGEO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "674b07c223e9cd3bad1816541dfa53b0801a912e3a2f428c5107d71507f108b1",
+            "retrievedAt": "2026-06-21T20:10:05.839Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/officers?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "appointedOn": "2025-07-01",
+          "name": "INGBER, Randall David",
+          "officerRole": "secretary"
+        },
+        "note": "Officer names and appointments are public-register information.",
+        "type": "officers"
+      }
+    ],
+    "profile": [
+      {
+        "company": {
+          "companyNumber": "00445790",
+          "registeredName": "TESCO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "6dc1683ccc2a81bf1d68a899acd8dc95e2738c74f113882adb5c99e0baf3ea1b",
+            "retrievedAt": "2026-06-21T20:10:05.309Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00445790",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "companyName": "TESCO PLC",
+          "companyNumber": "00445790",
+          "companyStatus": "active",
+          "dateOfCreation": "1947-11-27",
+          "jurisdiction": "england-wales",
+          "type": "plc"
+        },
+        "type": "profile"
+      },
+      {
+        "company": {
+          "companyNumber": "01470151",
+          "registeredName": "BAE SYSTEMS PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "6d9e7c8d7eaafbb518ebd0cd60f9a5acf29b4e6feaa9730979a72666139ab71c",
+            "retrievedAt": "2026-06-21T20:10:05.544Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/01470151",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "companyName": "BAE SYSTEMS PLC",
+          "companyNumber": "01470151",
+          "companyStatus": "active",
+          "dateOfCreation": "1979-12-31",
+          "jurisdiction": "england-wales",
+          "type": "plc"
+        },
+        "type": "profile"
+      },
+      {
+        "company": {
+          "companyNumber": "00023307",
+          "registeredName": "DIAGEO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "fc7ecaa6fca214ec50cb464f20b68de42093438c74f96a552a2e95070d5e5d93",
+            "retrievedAt": "2026-06-21T20:10:05.755Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00023307",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "companyName": "DIAGEO PLC",
+          "companyNumber": "00023307",
+          "companyStatus": "active",
+          "dateOfCreation": "1886-10-21",
+          "jurisdiction": "england-wales",
+          "type": "plc"
+        },
+        "type": "profile"
+      }
+    ],
+    "pscs": [
+      {
+        "company": {
+          "companyNumber": "00445790",
+          "registeredName": "TESCO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "8fcc8d23fe072122f7c99186f0e52be3b74886f18fa7fc94b051fbdb470837a2",
+            "retrievedAt": "2026-06-21T20:10:05.453Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00445790/persons-with-significant-control?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "availability": "complete",
+          "sampledItems": 0,
+          "statusCode": 200,
+          "totalResults": 0
+        },
+        "note": "No PSC items were returned in the sampled page. Large listed PLCs commonly report no current PSCs on this endpoint.",
+        "type": "pscs"
+      },
+      {
+        "company": {
+          "companyNumber": "01470151",
+          "registeredName": "BAE SYSTEMS PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "b2593bbff15a09230b31f14d62c2c1a0e63a406f66d9f5c7fe9dd4fabc9f1426",
+            "retrievedAt": "2026-06-21T20:10:05.673Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/01470151/persons-with-significant-control?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "availability": "complete",
+          "sampledItems": 0,
+          "statusCode": 200,
+          "totalResults": 0
+        },
+        "note": "No PSC items were returned in the sampled page. Large listed PLCs commonly report no current PSCs on this endpoint.",
+        "type": "pscs"
+      },
+      {
+        "company": {
+          "companyNumber": "00023307",
+          "registeredName": "DIAGEO PLC"
+        },
+        "evidence": [
+          {
+            "payloadSha256": "7553bde77623a2406f914e05da39eadbcda36a7cf27edd92659fe2598fdc4994",
+            "retrievedAt": "2026-06-21T20:10:05.881Z",
+            "sourceUri": "https://api.company-information.service.gov.uk/company/00023307/persons-with-significant-control?items_per_page=3",
+            "statusCode": 200
+          }
+        ],
+        "fields": {
+          "availability": "complete",
+          "sampledItems": 0,
+          "statusCode": 200,
+          "totalResults": 0
+        },
+        "note": "No PSC items were returned in the sampled page. Large listed PLCs commonly report no current PSCs on this endpoint.",
+        "type": "pscs"
+      }
+    ]
+  }
+}
