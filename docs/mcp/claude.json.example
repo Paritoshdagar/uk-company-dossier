@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "uk-company-dossier": {
+      "command": "node",
+      "args": [
+        "${UK_COMPANY_DOSSIER_REPOSITORY}/dist/cli/main.js",
+        "mcp"
+      ],
+      "env": {
+        "COMPANIES_HOUSE_API_KEY": "${COMPANIES_HOUSE_API_KEY}",
+        "COMPANIES_HOUSE_API_BASE_URL": "https://api.company-information.service.gov.uk",
+        "COMPANIES_HOUSE_DOCUMENT_API_BASE_URL": "https://document-api.company-information.service.gov.uk"
+      }
+    }
+  }
+}

@@ -76,11 +76,7 @@ describe("unavailable planned capability scripts", () => {
     expectUnavailableResult(result, "MCP service");
   });
 
-  it.each([
-    ["mcp", "MCP service"],
-    ["docs:mermaid", "Mermaid documentation validation"],
-    ["docs:links", "documentation link checking"],
-  ])(
+  it.each([["mcp", "MCP service"]])(
     "%s exits 2 without claiming the planned capability exists",
     async (scriptName, capabilityName) => {
       const result = await runUnavailableCommand("npm", [
@@ -92,4 +88,21 @@ describe("unavailable planned capability scripts", () => {
       expectUnavailableResult(result, capabilityName);
     },
   );
+});
+
+describe("available documentation quality scripts", () => {
+  it.each([
+    ["docs:links", "Documentation link checks passed.\n"],
+    ["docs:mermaid", "Mermaid documentation checks passed.\n"],
+  ])("%s exits 0 with a concise stdout message", async (scriptName, stdout) => {
+    const result = await runUnavailableCommand("npm", [
+      "run",
+      "--silent",
+      scriptName,
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(stdout);
+    expect(result.stderr).toBe("");
+  });
 });

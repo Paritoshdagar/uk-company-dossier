@@ -9,3 +9,11 @@ If a selected ranked company later fails data retrieval, the candidate snapshot 
 The initial policy requires one demonstration each from objective Companies House-derived strata: active private company, active public company, and dissolved company. Exclusions are limited to invalid company numbers, missing status, duplicate canonical company numbers, candidates outside the declared strata, and status mismatches.
 
 Future FTSE350 demonstrations use the same deterministic algorithm with seed `ftse350-public-demo-v1` and a dated official FTSE350 constituent snapshot as the eligibility pool; inclusion is not investment, legal, accounting, credit, compliance, or risk commentary.
+
+## Re-run the picker
+
+```bash
+npm run examples:select
+```
+
+The command is deterministic for a fixed policy, seed, and candidate snapshot. If candidate data changes, commit the policy/snapshot update with the generated manifest and explain the objective source used for the eligibility pool.

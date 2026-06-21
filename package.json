@@ -50,8 +50,8 @@
     "cli": "node --enable-source-maps dist/cli/main.js",
     "mcp": "node scripts/unavailable.mjs \"MCP service\"",
     "examples:select": "npm run build --silent && node --enable-source-maps dist/examples/random-picker.js",
-    "docs:mermaid": "node scripts/unavailable.mjs \"Mermaid documentation validation\"",
-    "docs:links": "node scripts/unavailable.mjs \"documentation link checking\"",
+    "docs:mermaid": "node scripts/extract-mermaid.mjs",
+    "docs:links": "node scripts/check-links.mjs",
     "verify:commit": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "verify:push": "npm run verify:commit && npm run test:coverage && npm audit --omit=dev",
     "verify:release": "npm run verify:push && npm audit"
