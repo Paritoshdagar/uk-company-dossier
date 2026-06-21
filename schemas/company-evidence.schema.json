@@ -310,7 +310,7 @@
     "OfficialCompaniesHouseUri": {
       "description": "Official Companies House or GOV.UK HTTPS URI.",
       "format": "uri",
-      "pattern": "^https://(api|developer|find-and-update)\\.company-information\\.service\\.gov\\.uk(/|$)|^https://www\\.gov\\.uk(/|$)",
+      "pattern": "^https://(?:(?:api|developer|find-and-update)\\.company-information\\.service\\.gov\\.uk|www\\.gov\\.uk)(?:[/?#]|$)",
       "type": "string"
     },
     "SectionKey": {

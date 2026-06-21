@@ -15,6 +15,7 @@ import {
   evidenceSectionSchema,
   evidenceStatusSchema,
   jsonValueSchema,
+  sourceAttributionSchema,
   type CompanyDossier,
   type EvidenceStatus,
 } from "../../src/contracts/company-evidence.js";
@@ -105,6 +106,10 @@ function expectJsonSchemaAccepts(
   }
 }
 
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 const validEvidenceRef = {
   sourceUri: "https://api.company-information.service.gov.uk/company/00000006",
   retrievedAt: "2026-06-21T10:29:00Z",
@@ -178,6 +183,10 @@ describe("company evidence Zod contract", () => {
       {
         ...validEvidenceRef,
         sourceUri: "http://api.company-information.service.gov.uk/company/1",
+      },
+      {
+        ...validEvidenceRef,
+        sourceUri: "HTTPS://api.company-information.service.gov.uk/company/1",
       },
       { ...validEvidenceRef, retrievedAt: "2026-06-21 10:29:00" },
       { ...validEvidenceRef, payloadSha256: "A".repeat(64) },
@@ -290,6 +299,33 @@ describe("company evidence Zod contract", () => {
       expect(evidenceSectionSchema.safeParse(invalid).success).toBe(false);
     }
   });
+
+  it("matches JSON Schema URI parity for official host query and lowercase scheme rules", async () => {
+    const validator = await loadDossierJsonValidator();
+    const fixture = (await loadJsonFile(
+      join(validFixturesRoot, "complete-source-dossier.json"),
+    )) as CompanyDossier;
+    const officialQueryAtHost = cloneJson(fixture);
+
+    officialQueryAtHost.sourceAttribution.sourceUri =
+      "https://api.company-information.service.gov.uk?company=00000006";
+    officialQueryAtHost.sourceAttribution.licenceUri =
+      "https://developer.company-information.service.gov.uk?terms=licence";
+    officialQueryAtHost.sourceAttribution.dataTermsUri =
+      "https://www.gov.uk?terms=companies-house";
+
+    expect(
+      sourceAttributionSchema.safeParse(officialQueryAtHost.sourceAttribution)
+        .success,
+    ).toBe(true);
+    expect(companyDossierSchema.safeParse(officialQueryAtHost).success).toBe(
+      true,
+    );
+    expect(
+      validator(officialQueryAtHost),
+      JSON.stringify(validator.errors),
+    ).toBe(true);
+  });
 });
 
 describe("safe dossier errors", () => {
@@ -316,6 +352,34 @@ describe("safe dossier errors", () => {
     expect(redacted).not.toContain(basicValue);
     expect(redacted).not.toContain(apiKeyValue);
     expect(redacted).not.toContain(tokenValue);
+    expect(redacted).toContain("[REDACTED]");
+  });
+
+  it("redacts common token field variants from assignments and JSON-shaped text", () => {
+    const fields = [
+      ["access", "token"].join("_"),
+      ["refresh", "token"].join("_"),
+      ["id", "token"].join("_"),
+      ["access", "Token"].join(""),
+      ["refresh", "Token"].join(""),
+      ["api", "Token"].join(""),
+    ];
+    const cases = fields.map((field, index) => ({
+      field,
+      value: [field.toLowerCase(), "value", String(index)].join("-"),
+    }));
+    const text = cases
+      .flatMap(({ field, value }) => [
+        `${field}=${value}`,
+        JSON.stringify({ [field]: value }),
+      ])
+      .join(" ");
+    const redacted = redactSecretText(text);
+
+    for (const { value } of cases) {
+      expect(redacted).not.toContain(value);
+    }
+
     expect(redacted).toContain("[REDACTED]");
   });
 

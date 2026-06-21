@@ -7,6 +7,8 @@ const normalizedTypePattern = /^[a-z][a-z0-9._:-]*$/;
 const sectionKeyPattern = /^[a-z][a-z0-9_:-]*$/;
 const companyNumberPattern = /^[0-9A-Z]{8}$/;
 const lowercaseSha256Pattern = /^[0-9a-f]{64}$/;
+const officialCompaniesHouseUriPattern =
+  /^https:\/\/(?:(?:api|developer|find-and-update)\.company-information\.service\.gov\.uk|www\.gov\.uk)(?:[/?#]|$)/;
 
 export type JsonValue =
   | null
@@ -17,6 +19,10 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 
 function isHttpsUri(value: string): boolean {
+  if (!value.startsWith("https://")) {
+    return false;
+  }
+
   try {
     return new URL(value).protocol === "https:";
   } catch {
@@ -25,15 +31,12 @@ function isHttpsUri(value: string): boolean {
 }
 
 function isOfficialCompaniesHouseUri(value: string): boolean {
-  try {
-    const hostname = new URL(value).hostname;
+  if (!officialCompaniesHouseUriPattern.test(value)) {
+    return false;
+  }
 
-    return (
-      hostname === "api.company-information.service.gov.uk" ||
-      hostname === "developer.company-information.service.gov.uk" ||
-      hostname === "find-and-update.company-information.service.gov.uk" ||
-      hostname === "www.gov.uk"
-    );
+  try {
+    return new URL(value).protocol === "https:";
   } catch {
     return false;
   }

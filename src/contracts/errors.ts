@@ -33,10 +33,16 @@ const authorizationPattern =
   /\b(authorization\s*[:=]\s*(?:Bearer|Basic)\s+)[^\s,;&"'}]+/giu;
 const apiKeyQueryPattern =
   /([?&](?:api[-_]?key|apikey|x-api-key)=)[^&#\s"']+/giu;
-const secretAssignmentPattern =
-  /\b((?:api[-_]?key|apikey|x-api-key|token|secret|password|credential|client_secret|private_key)\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;&}]+)/giu;
-const jsonSecretFieldPattern =
-  /("?)(api[-_]?key|apikey|x-api-key|authorization|token|secret|password|credential|client_secret|private_key)\1(\s*:\s*)("[^"]*"|'[^']*'|[^\s,}&]+)/giu;
+const sensitiveFieldPattern =
+  "api[-_]?key|apikey|x-api-key|api[-_]?token|apitoken|access[-_]?token|accesstoken|refresh[-_]?token|refreshtoken|id[-_]?token|idtoken|token|secret|password|credential|client_secret|private_key";
+const secretAssignmentPattern = new RegExp(
+  `\\b((?:${sensitiveFieldPattern})\\s*[:=]\\s*)("[^"]*"|'[^']*'|[^\\s,;&}]+)`,
+  "giu",
+);
+const jsonSecretFieldPattern = new RegExp(
+  `("?)(authorization|${sensitiveFieldPattern})\\1(\\s*:\\s*)("[^"]*"|'[^']*'|[^\\s,}&]+)`,
+  "giu",
+);
 
 export function redactSecretText(value: string): string {
   return value
