@@ -882,6 +882,18 @@ function filterDossierSections(
   });
 }
 
+function parseDossierArgument(value: unknown): CompanyDossier {
+  const result = companyDossierSchema.safeParse(value);
+
+  if (!result.success) {
+    throw new McpToolInputError(
+      'Argument "dossier" must satisfy the company evidence schema.',
+    );
+  }
+
+  return result.data;
+}
+
 function stringValue(
   record: Record<string, unknown>,
   key: string,
@@ -1074,7 +1086,7 @@ async function getFilingDocument(
 async function saveSnapshot(args: unknown): Promise<ToolResultPayload> {
   const record = parseArgs(args, saveSnapshotInputSchema);
   const snapshotDir = parseSnapshotDir(requiredString(record, "snapshotDir"));
-  const dossier = companyDossierSchema.parse(record.dossier);
+  const dossier = parseDossierArgument(record.dossier);
 
   return {
     metadata: await saveDossierSnapshot({

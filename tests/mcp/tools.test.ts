@@ -530,7 +530,29 @@ describe("company dossier MCP tool contracts", () => {
     });
   });
 
-  it("validates company numbers and returns structured safe tool errors", async () => {
+  it("rejects invalid company numbers as structured safe input errors", async () => {
+    const result = await executeDossierMcpTool(
+      "build_company_dossier",
+      {
+        companyNumber: "bad",
+      },
+      {
+        clock: { now: () => new Date(generatedAt) },
+        gateway: fixtureGateway(),
+      },
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: "invalid_input",
+      },
+      ok: false,
+    });
+    expect(JSON.stringify(result)).not.toContain("stack");
+  });
+
+  it("rejects unknown properties as structured safe tool errors", async () => {
     const secret = "authorization: Bearer should-not-leak";
     const result = await executeDossierMcpTool(
       "build_company_dossier",
@@ -734,6 +756,23 @@ describe("company dossier MCP tool contracts", () => {
         ok: false,
       },
     });
+  });
+
+  it("rejects invalid supplied dossiers for snapshots as structured input errors", async () => {
+    const result = await executeDossierMcpTool("save_dossier_snapshot", {
+      dossier: {},
+      snapshotDir: await temporaryDirectory(),
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({
+      error: {
+        code: "invalid_input",
+      },
+      ok: false,
+    });
+    expect(JSON.stringify(result)).not.toContain("internal_error");
+    expect(JSON.stringify(result)).not.toContain("stack");
   });
 
   it("caps search page size and document byte size", async () => {
