@@ -1,0 +1,59 @@
+{
+  "name": "uk-company-dossier",
+  "version": "0.1.0",
+  "description": "A command-line service for reproducible UK company dossiers.",
+  "private": false,
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/cli/main.js",
+  "types": "./dist/cli/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/cli/main.d.ts",
+      "import": "./dist/cli/main.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dossier": "./dist/cli/main.js"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format:check": "prettier --check package.json tsconfig.json vitest.config.ts eslint.config.js \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "doctor": "npm run cli -- doctor",
+    "cli": "node --enable-source-maps dist/cli/main.js",
+    "mcp": "node --enable-source-maps dist/mcp/main.js",
+    "examples:select": "node --enable-source-maps dist/examples/select.js",
+    "docs:mermaid": "node --enable-source-maps dist/docs/validate-mermaid.js",
+    "docs:links": "node --enable-source-maps dist/docs/check-links.js",
+    "verify:commit": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "verify:push": "npm run verify:commit && npm run test:coverage && npm audit --omit=dev",
+    "verify:release": "npm run verify:push && npm audit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "commander": "15.0.0",
+    "dotenv": "17.4.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "@vitest/coverage-v8": "4.1.9",
+    "eslint": "10.5.0",
+    "prettier": "3.8.4",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.61.1",
+    "vitest": "4.1.9"
+  }
+}

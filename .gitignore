@@ -18,3 +18,9 @@
 
 # Isolated development worktrees
 /.worktrees/
+
+# Node build and test artifacts
+/node_modules/
+/dist/
+/coverage/
+*.tsbuildinfo
