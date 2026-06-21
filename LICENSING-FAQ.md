@@ -16,9 +16,9 @@ Unless a file says otherwise, repository-authored source code, scripts, configur
 
 Commercial use requires separately signed written permission from the copyright holder. Sending a request, opening an issue, or discussing a possible commercial licence is not permission.
 
-## May I contribute code?
+## May I contribute?
 
-External code contributions are frozen until a UK intellectual-property solicitor has reviewed and approved the contributor agreement required for dual licensing. Bug reports and use-case proposals remain welcome under [CONTRIBUTING.md](CONTRIBUTING.md).
+All external repository contributions are frozen until a UK intellectual-property solicitor has reviewed and approved the contributor agreement required for dual licensing. This includes code, scripts, configuration, documentation, examples, patches, and other copyrightable or authored material. Bug reports and use-case proposals remain welcome under [CONTRIBUTING.md](CONTRIBUTING.md), but while the freeze applies they must not include patches or substantial authored replacement content.
 
 ## Is this legal advice?
 
