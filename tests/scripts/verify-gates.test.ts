@@ -119,6 +119,21 @@ async function createFixtureRepository(): Promise<string> {
 }
 
 describe("cross-platform release verification gates", () => {
+  it("runs Windows command scripts through a shell", async () => {
+    const { requiresShellForSpawn } =
+      (await import("../../scripts/verify-lib.mjs")) as {
+        requiresShellForSpawn: (
+          command: string,
+          platform?: NodeJS.Platform,
+        ) => boolean;
+      };
+
+    expect(requiresShellForSpawn("npm.cmd", "win32")).toBe(true);
+    expect(requiresShellForSpawn("pnpm.CMD", "win32")).toBe(true);
+    expect(requiresShellForSpawn("git", "win32")).toBe(false);
+    expect(requiresShellForSpawn("npm", "linux")).toBe(false);
+  });
+
   it("uses cross-platform Node package scripts instead of Bash or chmod", async () => {
     const packageJson = JSON.parse(
       await readFile(join(repositoryRoot, "package.json"), "utf8"),
@@ -172,7 +187,13 @@ describe("cross-platform release verification gates", () => {
     ]);
 
     expect(`${ciWorkflow}\n${releaseWorkflow}`).not.toContain("go install ");
+    expect(`${ciWorkflow}\n${releaseWorkflow}`).not.toContain(
+      "github.com/gitleaks/gitleaks/v8",
+    );
     expect(`${ciWorkflow}\n${releaseWorkflow}`).toContain("go run ");
+    expect(`${ciWorkflow}\n${releaseWorkflow}`).toContain(
+      "github.com/zricethezav/gitleaks/v8@v8.30.0",
+    );
     expect(releaseWorkflow).toContain("GH_TOKEN: ${{ github.token }}");
   });
 

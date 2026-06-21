@@ -10,6 +10,10 @@ export function npmCommand() {
   return isWindows ? "npm.cmd" : "npm";
 }
 
+export function requiresShellForSpawn(command, platform = process.platform) {
+  return platform === "win32" && /\.(?:bat|cmd)$/iu.test(command);
+}
+
 export function log(message) {
   process.stdout.write(`==> ${message}\n`);
 }
@@ -31,7 +35,7 @@ export async function run(command, args, options = {}) {
     const child = spawn(command, args, {
       cwd,
       env,
-      shell: false,
+      shell: requiresShellForSpawn(command),
       stdio:
         stdio === "inherit"
           ? input === undefined

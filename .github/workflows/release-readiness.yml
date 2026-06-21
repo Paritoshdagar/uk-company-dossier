@@ -25,8 +25,8 @@ jobs:
       - run: npm run verify:release
         env:
           GH_TOKEN: ${{ github.token }}
-      - run: go run github.com/gitleaks/gitleaks/v8@v8.30.0 detect --source . --redact --verbose
-      - run: git log --all -p -- . ':!package-lock.json' | go run github.com/gitleaks/gitleaks/v8@v8.30.0 stdin --redact
+      - run: go run github.com/zricethezav/gitleaks/v8@v8.30.0 detect --source . --redact --verbose
+      - run: git log --all -p -- . ':!package-lock.json' | go run github.com/zricethezav/gitleaks/v8@v8.30.0 stdin --redact
       - run: go run github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8 scan source --lockfile package-lock.json
       - name: Confirm workflow cannot change visibility
         run: echo "Repository visibility changes are never performed by this workflow."

@@ -48,5 +48,5 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: go run github.com/gitleaks/gitleaks/v8@v8.30.0 detect --source . --no-git --redact --verbose
+      - run: go run github.com/zricethezav/gitleaks/v8@v8.30.0 detect --source . --no-git --redact --verbose
       - run: go run github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8 scan source --lockfile package-lock.json
