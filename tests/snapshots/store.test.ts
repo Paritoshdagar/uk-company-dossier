@@ -9,7 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   companyDossierSchema,
@@ -28,6 +28,7 @@ const generatedAt = "2026-06-21T12:00:00.000Z";
 const retrievedAt = "2026-06-21T11:59:00.000Z";
 const sourceUri =
   "https://api.company-information.service.gov.uk/company/00000006";
+type TestFact = CompanyDossier["sections"][string]["facts"][number];
 
 function evidenceRef(
   uri: string = sourceUri,
@@ -36,6 +37,16 @@ function evidenceRef(
     payloadSha256: "b".repeat(64),
     retrievedAt,
     sourceUri: uri,
+  };
+}
+
+function duplicateIdFact(value: string): TestFact {
+  return {
+    evidence: [evidenceRef()],
+    id: "company-profile.duplicate",
+    origin: "source",
+    type: "company.duplicate",
+    value,
   };
 }
 
@@ -251,6 +262,70 @@ describe("snapshot store path confinement", () => {
     });
   });
 
+  it("rejects symlinks with valid snapshot-shaped file names", async () => {
+    await withSnapshotDir(async (snapshotDir) => {
+      const dossier = createDossier();
+      const fileName = snapshotFileNameForDossier(dossier);
+      const outsidePath = join(snapshotDir, "..", "outside-dossier.json");
+
+      await writeFile(outsidePath, JSON.stringify(dossier), "utf8");
+      await symlink(outsidePath, join(snapshotDir, fileName));
+
+      await expect(
+        readDossierSnapshot({ fileName, snapshotDir }),
+      ).rejects.toThrow(SnapshotError);
+    });
+  });
+
+  it("reads the opened regular file when the path is swapped after pre-read checks", async () => {
+    await withSnapshotDir(async (snapshotDir) => {
+      const dossier = createDossier();
+      const replacementDossier = createDossier({
+        company: {
+          companyNumber: "SC123456",
+          registeredName: "Replacement Limited",
+        },
+      });
+      const saved = await saveDossierSnapshot({ dossier, snapshotDir });
+      const outsidePath = join(snapshotDir, "..", "replacement-dossier.json");
+
+      await writeFile(outsidePath, JSON.stringify(replacementDossier), "utf8");
+      vi.resetModules();
+      vi.doMock("node:fs/promises", async (importOriginal) => {
+        const actual =
+          await importOriginal<typeof import("node:fs/promises")>();
+
+        return {
+          ...actual,
+          lstat: async (
+            ...parameters: Parameters<typeof actual.lstat>
+          ): ReturnType<typeof actual.lstat> => {
+            const stat = await actual.lstat(...parameters);
+            await actual.unlink(saved.path);
+            await actual.symlink(outsidePath, saved.path);
+
+            return stat;
+          },
+        };
+      });
+
+      try {
+        const { readDossierSnapshot: readWithRace } =
+          await import("../../src/snapshots/store.js");
+        const snapshot = await readWithRace({
+          fileName: saved.fileName,
+          snapshotDir,
+        });
+
+        expect(snapshot.companyNumber).toBe("00000006");
+        expect(snapshot.dossier.company.companyNumber).toBe("00000006");
+      } finally {
+        vi.doUnmock("node:fs/promises");
+        vi.resetModules();
+      }
+    });
+  });
+
   it("rejects untrusted company numbers for list operations", async () => {
     await withSnapshotDir(async (snapshotDir) => {
       await expect(
@@ -293,6 +368,99 @@ describe("snapshot store list and compare", () => {
           path: join(snapshotDir, "00000006--2026-06-21T13-00-00.000Z.json"),
         },
       ]);
+    });
+  });
+
+  it("reports changed duplicate fact IDs by matching duplicate occurrences", async () => {
+    await withSnapshotDir(async (snapshotDir) => {
+      const before = createDossier({
+        sections: {
+          ...createDossier().sections,
+          company_profile: {
+            ...createDossier().sections.company_profile,
+            facts: [duplicateIdFact("original"), duplicateIdFact("survivor")],
+          },
+        },
+      });
+      const after = createDossier({
+        generatedAt: "2026-06-21T13:00:00.000Z",
+        sections: {
+          ...before.sections,
+          company_profile: {
+            ...before.sections.company_profile,
+            facts: [duplicateIdFact("changed"), duplicateIdFact("survivor")],
+          },
+        },
+      });
+      const beforeSnapshot = await saveDossierSnapshot({
+        dossier: before,
+        snapshotDir,
+      });
+      const afterSnapshot = await saveDossierSnapshot({
+        dossier: after,
+        snapshotDir,
+      });
+      const comparison = await compareDossierSnapshots({
+        afterFileName: afterSnapshot.fileName,
+        beforeFileName: beforeSnapshot.fileName,
+        snapshotDir,
+      });
+
+      expect(comparison.hasChanges).toBe(true);
+      expect(comparison.changedFacts).toHaveLength(1);
+      expect(comparison.changedFacts[0]?.factId).toBe(
+        "company-profile.duplicate",
+      );
+      expect(comparison.changedFacts[0]?.before.value).toBe("original");
+      expect(comparison.changedFacts[0]?.after.value).toBe("changed");
+      expect(comparison.removedFacts).toEqual([]);
+      expect(comparison.addedFacts).toEqual([]);
+    });
+  });
+
+  it("reports removed duplicate fact ID occurrences instead of collapsing them", async () => {
+    await withSnapshotDir(async (snapshotDir) => {
+      const before = createDossier({
+        sections: {
+          ...createDossier().sections,
+          company_profile: {
+            ...createDossier().sections.company_profile,
+            facts: [duplicateIdFact("removed"), duplicateIdFact("survivor")],
+          },
+        },
+      });
+      const after = createDossier({
+        generatedAt: "2026-06-21T13:00:00.000Z",
+        sections: {
+          ...before.sections,
+          company_profile: {
+            ...before.sections.company_profile,
+            facts: [duplicateIdFact("survivor")],
+          },
+        },
+      });
+      const beforeSnapshot = await saveDossierSnapshot({
+        dossier: before,
+        snapshotDir,
+      });
+      const afterSnapshot = await saveDossierSnapshot({
+        dossier: after,
+        snapshotDir,
+      });
+      const comparison = await compareDossierSnapshots({
+        afterFileName: afterSnapshot.fileName,
+        beforeFileName: beforeSnapshot.fileName,
+        snapshotDir,
+      });
+
+      expect(comparison.hasChanges).toBe(true);
+      expect(comparison.changedFacts).toEqual([]);
+      expect(comparison.addedFacts).toEqual([]);
+      expect(comparison.removedFacts).toHaveLength(1);
+      expect(comparison.removedFacts[0]?.factId).toBe(
+        "company-profile.duplicate",
+      );
+      expect(comparison.removedFacts[0]?.fact.value).toBe("removed");
     });
   });
 

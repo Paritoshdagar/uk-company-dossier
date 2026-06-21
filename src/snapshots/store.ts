@@ -1,14 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import {
-  link,
-  lstat,
-  mkdir,
-  readFile,
-  readdir,
-  unlink,
-  open,
-} from "node:fs/promises";
+import { link, mkdir, readdir, unlink, open } from "node:fs/promises";
 import { basename, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -105,6 +97,10 @@ interface CollectedFact {
   readonly sectionKey: string;
 }
 
+const fileSystemConstants = constants as typeof constants & {
+  readonly O_NOFOLLOW?: number;
+};
+const noFollowOpenFlag = fileSystemConstants.O_NOFOLLOW ?? 0;
 const snapshotFileNamePattern =
   /^[0-9A-Z]{8}--[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}-[0-9]{2})\.json$/u;
 
@@ -261,6 +257,24 @@ function metadataFor(
   };
 }
 
+async function readRegularFileWithoutFollowingSymlinks(
+  path: string,
+): Promise<string> {
+  const fileHandle = await open(path, constants.O_RDONLY | noFollowOpenFlag);
+
+  try {
+    const stat = await fileHandle.stat();
+
+    if (!stat.isFile()) {
+      throw snapshotError("Snapshot path must resolve to a regular file.");
+    }
+
+    return await fileHandle.readFile("utf8");
+  } finally {
+    await fileHandle.close();
+  }
+}
+
 export async function saveDossierSnapshot(
   options: SaveDossierSnapshotOptions,
 ): Promise<DossierSnapshotMetadata> {
@@ -290,13 +304,9 @@ export async function readDossierSnapshot(
   const { path } = resolveSnapshotFile(options.snapshotDir, options.fileName);
 
   try {
-    const stat = await lstat(path);
-
-    if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw snapshotError("Snapshot path must resolve to a regular file.");
-    }
-
-    const parsed = JSON.parse(await readFile(path, "utf8")) as unknown;
+    const parsed = JSON.parse(
+      await readRegularFileWithoutFollowingSymlinks(path),
+    ) as unknown;
     const dossier = parseDossierForSnapshot(parsed);
 
     return {
@@ -364,8 +374,8 @@ function collectedFactKey(sectionKey: string, factId: string): string {
   return `${sectionKey}\u0000${factId}`;
 }
 
-function collectFacts(dossier: CompanyDossier): Map<string, CollectedFact> {
-  const facts = new Map<string, CollectedFact>();
+function collectFacts(dossier: CompanyDossier): Map<string, CollectedFact[]> {
+  const facts = new Map<string, CollectedFact[]>();
 
   for (const sectionKey of Object.keys(dossier.sections).sort()) {
     const section = dossier.sections[sectionKey];
@@ -375,24 +385,19 @@ function collectFacts(dossier: CompanyDossier): Map<string, CollectedFact> {
     }
 
     for (const fact of section.facts) {
-      facts.set(collectedFactKey(sectionKey, fact.id), {
+      const key = collectedFactKey(sectionKey, fact.id);
+      const existingFacts = facts.get(key) ?? [];
+
+      existingFacts.push({
         fact,
         factId: fact.id,
         sectionKey,
       });
+      facts.set(key, existingFacts);
     }
   }
 
   return facts;
-}
-
-function sortedCollectedFacts(facts: Iterable<CollectedFact>): CollectedFact[] {
-  return [...facts].sort((left, right) => {
-    const leftKey = collectedFactKey(left.sectionKey, left.factId);
-    const rightKey = collectedFactKey(right.sectionKey, right.factId);
-
-    return leftKey.localeCompare(rightKey);
-  });
 }
 
 function compareFacts(
@@ -408,21 +413,44 @@ function compareFacts(
   const addedFacts: SnapshotFactChange[] = [];
   const changedFacts: SnapshotChangedFact[] = [];
   const removedFacts: SnapshotFactChange[] = [];
+  const factKeys = [
+    ...new Set([...beforeFacts.keys(), ...afterFacts.keys()]),
+  ].sort();
 
-  for (const beforeFact of sortedCollectedFacts(beforeFacts.values())) {
-    const afterFact = afterFacts.get(
-      collectedFactKey(beforeFact.sectionKey, beforeFact.factId),
-    );
+  for (const factKey of factKeys) {
+    const beforeGroup = beforeFacts.get(factKey) ?? [];
+    const afterGroup = afterFacts.get(factKey) ?? [];
+    const unmatchedBefore: CollectedFact[] = [];
+    const unmatchedAfter = [...afterGroup];
 
-    if (afterFact === undefined) {
-      removedFacts.push(beforeFact);
-      continue;
+    for (const beforeFact of beforeGroup) {
+      const exactMatchIndex = unmatchedAfter.findIndex(
+        (afterFact) =>
+          stableJsonStringify(beforeFact.fact) ===
+          stableJsonStringify(afterFact.fact),
+      );
+
+      if (exactMatchIndex === -1) {
+        unmatchedBefore.push(beforeFact);
+        continue;
+      }
+
+      unmatchedAfter.splice(exactMatchIndex, 1);
     }
 
-    if (
-      stableJsonStringify(beforeFact.fact) !==
-      stableJsonStringify(afterFact.fact)
-    ) {
+    const changedFactCount = Math.min(
+      unmatchedBefore.length,
+      unmatchedAfter.length,
+    );
+
+    for (let index = 0; index < changedFactCount; index += 1) {
+      const beforeFact = unmatchedBefore[index];
+      const afterFact = unmatchedAfter[index];
+
+      if (beforeFact === undefined || afterFact === undefined) {
+        continue;
+      }
+
       changedFacts.push({
         after: afterFact.fact,
         before: beforeFact.fact,
@@ -430,12 +458,12 @@ function compareFacts(
         sectionKey: beforeFact.sectionKey,
       });
     }
-  }
 
-  for (const afterFact of sortedCollectedFacts(afterFacts.values())) {
-    if (
-      !beforeFacts.has(collectedFactKey(afterFact.sectionKey, afterFact.factId))
-    ) {
+    for (const beforeFact of unmatchedBefore.slice(changedFactCount)) {
+      removedFacts.push(beforeFact);
+    }
+
+    for (const afterFact of unmatchedAfter.slice(changedFactCount)) {
       addedFacts.push(afterFact);
     }
   }
