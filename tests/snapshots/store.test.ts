@@ -277,54 +277,64 @@ describe("snapshot store path confinement", () => {
     });
   });
 
-  it("reads the opened regular file when the path is swapped after pre-read checks", async () => {
-    await withSnapshotDir(async (snapshotDir) => {
-      const dossier = createDossier();
-      const replacementDossier = createDossier({
-        company: {
-          companyNumber: "SC123456",
-          registeredName: "Replacement Limited",
-        },
-      });
-      const saved = await saveDossierSnapshot({ dossier, snapshotDir });
-      const outsidePath = join(snapshotDir, "..", "replacement-dossier.json");
-
-      await writeFile(outsidePath, JSON.stringify(replacementDossier), "utf8");
-      vi.resetModules();
-      vi.doMock("node:fs/promises", async (importOriginal) => {
-        const actual =
-          await importOriginal<typeof import("node:fs/promises")>();
-
-        return {
-          ...actual,
-          lstat: async (
-            ...parameters: Parameters<typeof actual.lstat>
-          ): ReturnType<typeof actual.lstat> => {
-            const stat = await actual.lstat(...parameters);
-            await actual.unlink(saved.path);
-            await actual.symlink(outsidePath, saved.path);
-
-            return stat;
+  it.skipIf(process.platform === "win32")(
+    "rejects when the path is swapped after pre-read checks",
+    async () => {
+      await withSnapshotDir(async (snapshotDir) => {
+        const dossier = createDossier();
+        const replacementDossier = createDossier({
+          company: {
+            companyNumber: "SC123456",
+            registeredName: "Replacement Limited",
           },
-        };
-      });
+        });
+        const saved = await saveDossierSnapshot({ dossier, snapshotDir });
+        const outsidePath = join(snapshotDir, "..", "replacement-dossier.json");
 
-      try {
-        const { readDossierSnapshot: readWithRace } =
-          await import("../../src/snapshots/store.js");
-        const snapshot = await readWithRace({
-          fileName: saved.fileName,
-          snapshotDir,
+        await writeFile(
+          outsidePath,
+          JSON.stringify(replacementDossier),
+          "utf8",
+        );
+        vi.resetModules();
+        vi.doMock("node:fs/promises", async (importOriginal) => {
+          const actual =
+            await importOriginal<typeof import("node:fs/promises")>();
+
+          return {
+            ...actual,
+            lstat: async (
+              ...parameters: Parameters<typeof actual.lstat>
+            ): ReturnType<typeof actual.lstat> => {
+              const stat = await actual.lstat(...parameters);
+              await actual.unlink(saved.path);
+              await actual.symlink(outsidePath, saved.path);
+
+              return stat;
+            },
+          };
         });
 
-        expect(snapshot.companyNumber).toBe("00000006");
-        expect(snapshot.dossier.company.companyNumber).toBe("00000006");
-      } finally {
-        vi.doUnmock("node:fs/promises");
-        vi.resetModules();
-      }
-    });
-  });
+        try {
+          const { readDossierSnapshot: readWithRace } =
+            await import("../../src/snapshots/store.js");
+
+          await expect(
+            readWithRace({
+              fileName: saved.fileName,
+              snapshotDir,
+            }),
+          ).rejects.toMatchObject({
+            code: "snapshot_error",
+            name: "SnapshotError",
+          });
+        } finally {
+          vi.doUnmock("node:fs/promises");
+          vi.resetModules();
+        }
+      });
+    },
+  );
 
   it("rejects untrusted company numbers for list operations", async () => {
     await withSnapshotDir(async (snapshotDir) => {

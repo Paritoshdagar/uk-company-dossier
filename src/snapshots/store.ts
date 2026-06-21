@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { link, mkdir, open, readdir, unlink } from "node:fs/promises";
+import { link, lstat, mkdir, open, readdir, unlink } from "node:fs/promises";
 import { basename, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -293,6 +293,12 @@ function metadataFor(
 async function readRegularFileWithoutFollowingSymlinks(
   path: string,
 ): Promise<string> {
+  const pathStat = await lstat(path);
+
+  if (pathStat.isSymbolicLink()) {
+    throw snapshotError("Snapshot path must not be a symbolic link.");
+  }
+
   const fileHandle = await open(path, constants.O_RDONLY | noFollowOpenFlag);
 
   try {

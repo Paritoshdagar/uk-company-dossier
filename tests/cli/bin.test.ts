@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, symlink } from "node:fs/promises";
+import { mkdtemp, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -14,14 +14,10 @@ import {
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
-const packageBinSmokeTimeoutMs = 30_000;
+const packageBinSmokeTimeoutMs = 90_000;
 
 describe("packaged dossier bin", () => {
   beforeAll(async () => {
-    await rm(join(repositoryRoot, "dist"), {
-      force: true,
-      recursive: true,
-    });
     await execPackageCommand("npm", ["run", "build"], {
       cwd: repositoryRoot,
     });

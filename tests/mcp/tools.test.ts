@@ -993,12 +993,19 @@ describe("company dossier MCP tool contracts", () => {
 describe("company dossier MCP stdio server", () => {
   it("lists tools and serves fixture-backed dossier evidence over official stdio transport", async () => {
     const { loaderPath, scriptPath } = await createStdioFixtureEntrypoint();
+    const scriptUrl = pathToFileURL(scriptPath).href;
     const client = new Client({
       name: "uk-company-dossier-test-client",
       version: "0.1.0",
     });
     const transport = new StdioClientTransport({
-      args: ["--experimental-loader", loaderPath, scriptPath],
+      args: [
+        "--experimental-loader",
+        loaderPath,
+        "--input-type=module",
+        "--eval",
+        `import(${JSON.stringify(scriptUrl)});`,
+      ],
       command: process.execPath,
       cwd: projectRoot,
       env: {
