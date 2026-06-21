@@ -15,10 +15,13 @@ export default tseslint.config(
         projectService: {
           allowDefaultProject: [
             "tests/cli/*.ts",
+            "tests/config/*.ts",
             "tests/contracts/*.ts",
+            "tests/doctor/*.ts",
             "tests/scripts/*.ts",
             "vitest.config.ts",
           ],
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 16,
         },
         tsconfigRootDir: import.meta.dirname,
       },
