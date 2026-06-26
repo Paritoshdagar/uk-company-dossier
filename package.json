@@ -49,7 +49,7 @@
     "format:check": "prettier --check THIRD-PARTY-NOTICES.md package.json tsconfig.json vitest.config.ts eslint.config.js bin/dossier.mjs \"scripts/**/*.mjs\" \"schemas/**/*.json\" \"src/**/*.ts\" \"tests/**/*.ts\" \"tests/fixtures/**/*.json\"",
     "doctor": "npm run cli -- doctor",
     "cli": "node --enable-source-maps dist/cli/main.js",
-    "mcp": "node scripts/unavailable.mjs \"MCP service\"",
+    "mcp": "npm run cli -- mcp",
     "examples:select": "npm run build --silent && node --enable-source-maps dist/examples/random-picker.js",
     "examples:ftse350": "npm run build --silent && node scripts/generate-ftse350-examples.mjs",
     "docs:mermaid": "node scripts/extract-mermaid.mjs",

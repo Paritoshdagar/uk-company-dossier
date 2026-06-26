@@ -82,19 +82,6 @@ describe("unavailable planned capability scripts", () => {
 
     expectUnavailableResult(result, "MCP service");
   });
-
-  it.each([["mcp", "MCP service"]])(
-    "%s exits 2 without claiming the planned capability exists",
-    async (scriptName, capabilityName) => {
-      const result = await runUnavailableCommand(
-        packageCommand("npm"),
-        ["run", "--silent", scriptName],
-        packageCommandOptions({}),
-      );
-
-      expectUnavailableResult(result, capabilityName);
-    },
-  );
 });
 
 describe("available documentation quality scripts", () => {
