@@ -104,13 +104,13 @@ npm run cli -- doctor --live
 Build a JSON dossier:
 
 ```bash
-npm run cli -- 00445790 --format json --output out/tesco-dossier.json
+npm run cli -- 00445790 --format json --output out/company-00445790-dossier.json
 ```
 
 Build a Markdown dossier:
 
 ```bash
-npm run cli -- 00445790 --format markdown --output out/tesco-dossier.md
+npm run cli -- 00445790 --format markdown --output out/company-00445790-dossier.md
 ```
 
 Output parent directories are created automatically.
