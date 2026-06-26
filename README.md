@@ -216,6 +216,8 @@ The software queries Companies House public-register services, but this reposito
 
 Before redistributing any generated data, review [DATA-LICENSING.md](DATA-LICENSING.md), the [Companies House data-products guidance](https://www.gov.uk/guidance/companies-house-data-products), and any terms that apply to the specific data or document you are using.
 
+Downstream portfolio repositories vendor a byte-pinned copy of this schema; see [docs/schema-parity.md](docs/schema-parity.md) for the canonical version, checksum, and pinning rules.
+
 ## Limitations
 
 - Public-register data can change after retrieval.
