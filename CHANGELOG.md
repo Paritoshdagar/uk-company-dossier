@@ -4,6 +4,20 @@
 
 - No unreleased changes yet.
 
+## 0.1.1 - 2026-06-26
+
+### Fixed
+
+- The `mcp` npm script now launches the shipped MCP server (`npm run cli -- mcp`) instead of printing a misleading "unavailable in this scaffold" message; the capability always shipped through the CLI entry.
+
+### Changed
+
+- README CLI examples use neutral, company-number-derived output filenames rather than a recognisable company name.
+
+### Added
+
+- `docs/schema-parity.md` documenting this repository's canonical ownership of the company-evidence schema and the byte-pinning rules downstream portfolio repositories follow.
+
 ## 0.1.0 - 2026-06-21
 
 First community release of UK Company Dossier.

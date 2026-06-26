@@ -1,6 +1,6 @@
 {
   "name": "uk-company-dossier",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A command-line service for reproducible UK company dossiers.",
   "private": false,
   "type": "module",
