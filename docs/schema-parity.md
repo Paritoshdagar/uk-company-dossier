@@ -30,7 +30,7 @@ Downstream repositories (`uk-filing-guardian`, `uk-ownership-lens`, `uk-corporat
    }
    ```
 
-3. Never require this repository as an unpublished runtime dependency. The schema is vendored, not imported at runtime (design spec §3).
+3. Never require this repository as an unpublished runtime dependency. The schema is vendored, not imported at runtime.
 
 ## Verification
 
